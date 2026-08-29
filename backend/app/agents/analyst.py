@@ -355,8 +355,11 @@ def _synthesize_report(
             verifier_report,
             ver_eid,
             strategist_report,
+            strat_eid,
             detective_report,
+            det_eid,
             context_report,
+            ctx_eid,
             fallback,
             context_available,
         ),
@@ -378,7 +381,13 @@ def _synthesize_report(
         context_report,
         fallback,
         context_available,
+        ver_eid=ver_eid,
+        strat_eid=strat_eid,
+        det_eid=det_eid,
+        ctx_eid=ctx_eid,
     )
+    for item in investigations:
+        used.extend(item.evidence_ids)
     verification_overall = None if verifier_report is None else verifier_report.overall_reported
     return ForecastAnalystReport(
         sections=sections,
@@ -823,8 +832,11 @@ def _section_actions(
     verifier_report: VerifierReport | None,
     ver_eid: str | None,
     strategist_report: ForecastStrategistReport | None,
+    strat_eid: str | None,
     detective_report: DataDetectiveReport | None,
+    det_eid: str | None,
     context_report: ContextAnalystReport | None,
+    ctx_eid: str | None,
     fallback: str,
     context_available: bool,
 ) -> ReportSection:
@@ -835,6 +847,10 @@ def _section_actions(
         context_report,
         fallback,
         context_available,
+        ver_eid=ver_eid,
+        strat_eid=strat_eid,
+        det_eid=det_eid,
+        ctx_eid=ctx_eid,
     )
     eids = list(dict.fromkeys(eid for item in actions for eid in item.evidence_ids)) or [fallback]
     if ver_eid is not None:
@@ -911,6 +927,39 @@ def _section_limitations(
     return _pack("limitations", body, [claim], eids, "low")
 
 
+def _investigation_evidence_ids(
+    item: InvestigationRecommendation,
+    source_eid: str | None,
+    fallback: str,
+) -> list[str]:
+    """Keep source citations. Attach the analyst-stored report id when present."""
+    ids = [eid for eid in item.evidence_ids if eid]
+    if source_eid is not None and source_eid not in ids:
+        ids.append(source_eid)
+    if not ids:
+        ids = [fallback]
+    return ids
+
+
+def _kept_investigation(
+    item: InvestigationRecommendation,
+    *,
+    source_eid: str | None,
+    fallback: str,
+    context_available: bool,
+) -> InvestigationRecommendation | None:
+    text = item.action.lower()
+    if any(phrase in text for phrase in _INVENTED_BIZ):
+        return None
+    if not context_available and any(token in text for token in _EVENT_TOKENS):
+        return None
+    return InvestigationRecommendation(
+        action=item.action,
+        evidence_ids=_investigation_evidence_ids(item, source_eid, fallback),
+        priority=item.priority,
+    )
+
+
 def _investigations_from_inputs(
     verifier_report: VerifierReport | None,
     strategist_report: ForecastStrategistReport | None,
@@ -918,12 +967,25 @@ def _investigations_from_inputs(
     context_report: ContextAnalystReport | None,
     fallback: str,
     context_available: bool,
+    *,
+    ver_eid: str | None = None,
+    strat_eid: str | None = None,
+    det_eid: str | None = None,
+    ctx_eid: str | None = None,
 ) -> list[InvestigationRecommendation]:
-    out: list[InvestigationRecommendation] = []
+    cleaned: list[InvestigationRecommendation] = []
     if verifier_report is not None:
-        out.extend(verifier_report.investigations)
+        for item in verifier_report.investigations:
+            kept = _kept_investigation(
+                item,
+                source_eid=ver_eid,
+                fallback=fallback,
+                context_available=context_available,
+            )
+            if kept is not None:
+                cleaned.append(kept)
     else:
-        out.append(
+        cleaned.append(
             InvestigationRecommendation(
                 action=(
                     "Run deterministic verification before relying on this forecast; "
@@ -933,26 +995,30 @@ def _investigations_from_inputs(
                 priority="high",
             )
         )
-    if strategist_report is not None:
-        out.extend(strategist_report.investigations)
-    if detective_report is not None:
-        out.extend(detective_report.investigations)
-    if context_report is not None:
-        out.extend(context_report.investigations)
-    cleaned: list[InvestigationRecommendation] = []
-    for item in out:
-        text = item.action.lower()
-        if any(phrase in text for phrase in _INVENTED_BIZ):
-            continue
-        if not context_available and any(token in text for token in _EVENT_TOKENS):
-            continue
-        cleaned.append(
-            InvestigationRecommendation(
-                action=item.action,
-                evidence_ids=[fallback],
-                priority=item.priority,
+    sources: tuple[tuple[list[InvestigationRecommendation], str | None], ...] = (
+        (
+            list(strategist_report.investigations) if strategist_report is not None else [],
+            strat_eid,
+        ),
+        (
+            list(detective_report.investigations) if detective_report is not None else [],
+            det_eid,
+        ),
+        (
+            list(context_report.investigations) if context_report is not None else [],
+            ctx_eid,
+        ),
+    )
+    for items, source_eid in sources:
+        for item in items:
+            kept = _kept_investigation(
+                item,
+                source_eid=source_eid,
+                fallback=fallback,
+                context_available=context_available,
             )
-        )
+            if kept is not None:
+                cleaned.append(kept)
     return cleaned
 
 

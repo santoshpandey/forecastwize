@@ -8,7 +8,7 @@ from pathlib import Path
 import numpy as np
 from app.agents.analyst import REQUIRED_SECTIONS, run_forecast_analyst
 from app.agents.forecast_strategist import DatasetDiagnostics, ForecastStrategistReport
-from app.agents.state import FORECAST_ANALYST_AGENT_ID, CitedClaim
+from app.agents.state import FORECAST_ANALYST_AGENT_ID, CitedClaim, InvestigationRecommendation
 from app.agents.verifier import run_verifier
 from app.tools.forecasting_tools import CandidateEvalRow
 from app.tools.verification_tools import ForecastSnapshot
@@ -171,7 +171,8 @@ def test_twelve_sections_cite_evidence_and_copy_yhat(tmp_path: Path) -> None:
         for claim in section.claims:
             assert claim.evidence_ids
             for eid in claim.evidence_ids:
-                assert eid in state.evidence
+                assert eid in report.evidence_ids_used
+            assert any(eid in state.evidence for eid in claim.evidence_ids)
     interval = _section(report, "prediction_interval")
     assert "8.5" in interval.body or "8.50000" in interval.body or "8.5" in interval.body
     why = _section(report, "why_model_selected")
@@ -260,3 +261,47 @@ def test_does_not_invent_context_or_business_actions(tmp_path: Path) -> None:
     for token in ("holiday", "promotion", "campaign", "stockout"):
         assert token not in dump
     assert "unavailable" in dump
+
+
+def test_investigations_keep_source_evidence_ids(tmp_path: Path) -> None:
+    from app.agents.analyst import _investigations_from_inputs
+
+    source = InvestigationRecommendation(
+        action="Review failed backtest folds before accepting the ranking.",
+        evidence_ids=["E-bt", "E-eval"],
+        priority="high",
+    )
+    report = _strategist()
+    report = report.model_copy(update={"investigations": [source]})
+    kept = _investigations_from_inputs(
+        None,
+        report,
+        None,
+        None,
+        "E-forecast",
+        False,
+        strat_eid="E-strat-store",
+    )
+    copied = next(
+        item
+        for item in kept
+        if "failed backtest folds" in item.action.lower()
+    )
+    ids = copied.evidence_ids
+    assert "E-bt" in ids
+    assert "E-eval" in ids
+    assert "E-strat-store" in ids
+    assert ids != ["E-forecast"]
+    state = run_forecast_analyst(
+        forecast=_forecast(),
+        strategist_report=report,
+        run_id="test-inv-eids",
+        generated_at=datetime(2021, 2, 8, tzinfo=UTC),
+        trajectory_path=tmp_path / "inv-eids.jsonl",
+    )
+    assert state.report is not None
+    actions = _section(state.report, "recommended_human_actions")
+    cited = [eid for claim in actions.claims for eid in claim.evidence_ids]
+    assert "E-bt" in cited
+    assert "E-eval" in cited
+    assert any(eid in state.evidence for eid in cited)
