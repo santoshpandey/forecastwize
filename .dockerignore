@@ -1,0 +1,15 @@
+.git
+.cursor
+frontend
+**/.venv
+**/__pycache__
+**/*.py[cod]
+**/.pytest_cache
+**/.ruff_cache
+**/.mypy_cache
+**/*.tsbuildinfo
+data/api
+trajectories
+experiments
+evaluation/artifacts
+.env

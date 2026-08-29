@@ -1,0 +1,960 @@
+{
+  "comparison_id": "comparison-20260829T123158Z",
+  "timestamp": "2026-08-29T12:31:58.747479Z",
+  "git_commit": "54c0a145b55808e8f68474f0485c80cb430dbcd3",
+  "baseline_evaluation_run_id": "baseline-20260829T123106Z",
+  "agent_evaluation_run_id": "agent-20260829T123136Z",
+  "case_list": [
+    "001",
+    "002",
+    "003",
+    "004",
+    "005",
+    "006",
+    "007",
+    "008",
+    "009",
+    "010",
+    "011",
+    "012"
+  ],
+  "case_lists_identical": true,
+  "primary_metric": "wis",
+  "per_case": [
+    {
+      "case_id": "001",
+      "baseline_status": "completed",
+      "agent_status": "completed",
+      "baseline_error_type": null,
+      "agent_error_type": null,
+      "baseline_error_message": null,
+      "agent_error_message": null,
+      "review_required": true,
+      "retry_number": 0,
+      "metrics": {
+        "wis": {
+          "name": "wis",
+          "direction": "lower_is_better",
+          "baseline": 0.454942572189656,
+          "agent": 0.454942572189656,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "smape": {
+          "name": "smape",
+          "direction": "lower_is_better",
+          "baseline": 2.526644009466476,
+          "agent": 2.526644009466476,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "wmape": {
+          "name": "wmape",
+          "direction": "lower_is_better",
+          "baseline": 2.502197023207575,
+          "agent": 2.502197023207575,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "mase": {
+          "name": "mase",
+          "direction": "lower_is_better",
+          "baseline": 1.2578943626680301,
+          "agent": 1.2578943626680301,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "interval_coverage": {
+          "name": "interval_coverage",
+          "direction": "higher_is_better",
+          "baseline": 0.5714285714285714,
+          "agent": 0.5714285714285714,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "interval_width": {
+          "name": "interval_width",
+          "direction": "lower_is_better",
+          "baseline": 2.0889391292311266,
+          "agent": 2.0889391292311266,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        }
+      },
+      "runtime_seconds": {
+        "name": "runtime_seconds",
+        "direction": "lower_is_better",
+        "baseline": 3.296149499947205,
+        "agent": 2.254208599915728,
+        "delta_agent_minus_baseline": -1.0419409000314772,
+        "relative_improvement": 0.3161085078356325
+      }
+    },
+    {
+      "case_id": "002",
+      "baseline_status": "completed",
+      "agent_status": "completed",
+      "baseline_error_type": null,
+      "agent_error_type": null,
+      "baseline_error_message": null,
+      "agent_error_message": null,
+      "review_required": true,
+      "retry_number": 0,
+      "metrics": {
+        "wis": {
+          "name": "wis",
+          "direction": "lower_is_better",
+          "baseline": 0.13234475763484313,
+          "agent": 0.13234475763484313,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "smape": {
+          "name": "smape",
+          "direction": "lower_is_better",
+          "baseline": 0.7175431465342378,
+          "agent": 0.7175431465342378,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "wmape": {
+          "name": "wmape",
+          "direction": "lower_is_better",
+          "baseline": 0.6942410114444943,
+          "agent": 0.6942410114444943,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "mase": {
+          "name": "mase",
+          "direction": "lower_is_better",
+          "baseline": 0.6802967704912889,
+          "agent": 0.6802967704912889,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "interval_coverage": {
+          "name": "interval_coverage",
+          "direction": "higher_is_better",
+          "baseline": 1.0,
+          "agent": 1.0,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "interval_width": {
+          "name": "interval_width",
+          "direction": "lower_is_better",
+          "baseline": 2.400203600822053,
+          "agent": 2.400203600822053,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        }
+      },
+      "runtime_seconds": {
+        "name": "runtime_seconds",
+        "direction": "lower_is_better",
+        "baseline": 2.2964786998927593,
+        "agent": 0.31461430015042424,
+        "delta_agent_minus_baseline": -1.981864399742335,
+        "relative_improvement": 0.8630014290290975
+      }
+    },
+    {
+      "case_id": "003",
+      "baseline_status": "completed",
+      "agent_status": "completed",
+      "baseline_error_type": null,
+      "agent_error_type": null,
+      "baseline_error_message": null,
+      "agent_error_message": null,
+      "review_required": true,
+      "retry_number": 1,
+      "metrics": {
+        "wis": {
+          "name": "wis",
+          "direction": "lower_is_better",
+          "baseline": 0.4355449313493981,
+          "agent": 2.6764777309005874,
+          "delta_agent_minus_baseline": 2.240932799551189,
+          "relative_improvement": -5.145124275946384
+        },
+        "smape": {
+          "name": "smape",
+          "direction": "lower_is_better",
+          "baseline": 3.03191781731738,
+          "agent": 19.840723825488595,
+          "delta_agent_minus_baseline": 16.808806008171217,
+          "relative_improvement": -5.5439517232836915
+        },
+        "wmape": {
+          "name": "wmape",
+          "direction": "lower_is_better",
+          "baseline": 2.965798785320981,
+          "agent": 18.810599331567147,
+          "delta_agent_minus_baseline": 15.844800546246166,
+          "relative_improvement": -5.3425069241611824
+        },
+        "mase": {
+          "name": "mase",
+          "direction": "lower_is_better",
+          "baseline": 1.564147040702137,
+          "agent": 9.920613436059528,
+          "delta_agent_minus_baseline": 8.35646639535739,
+          "relative_improvement": -5.342506924161183
+        },
+        "interval_coverage": {
+          "name": "interval_coverage",
+          "direction": "higher_is_better",
+          "baseline": 0.5714285714285714,
+          "agent": 0.9285714285714286,
+          "delta_agent_minus_baseline": 0.3571428571428572,
+          "relative_improvement": 0.6250000000000001
+        },
+        "interval_width": {
+          "name": "interval_width",
+          "direction": "lower_is_better",
+          "baseline": 2.1735987997068538,
+          "agent": 37.94610974061066,
+          "delta_agent_minus_baseline": 35.77251094090381,
+          "relative_improvement": -16.45773403340503
+        }
+      },
+      "runtime_seconds": {
+        "name": "runtime_seconds",
+        "direction": "lower_is_better",
+        "baseline": 2.4295650001149625,
+        "agent": 2.350859799887985,
+        "delta_agent_minus_baseline": -0.07870520022697747,
+        "relative_improvement": 0.03239477034911735
+      }
+    },
+    {
+      "case_id": "004",
+      "baseline_status": "completed",
+      "agent_status": "completed",
+      "baseline_error_type": null,
+      "agent_error_type": null,
+      "baseline_error_message": null,
+      "agent_error_message": null,
+      "review_required": true,
+      "retry_number": 0,
+      "metrics": {
+        "wis": {
+          "name": "wis",
+          "direction": "lower_is_better",
+          "baseline": 4.0462630166966305,
+          "agent": 4.0462630166966305,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "smape": {
+          "name": "smape",
+          "direction": "lower_is_better",
+          "baseline": 13.247116427925956,
+          "agent": 13.247116427925956,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "wmape": {
+          "name": "wmape",
+          "direction": "lower_is_better",
+          "baseline": 12.822778058290307,
+          "agent": 12.822778058290307,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "mase": {
+          "name": "mase",
+          "direction": "lower_is_better",
+          "baseline": 1.0106462812934796,
+          "agent": 1.0106462812934796,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "interval_coverage": {
+          "name": "interval_coverage",
+          "direction": "higher_is_better",
+          "baseline": 1.0,
+          "agent": 1.0,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "interval_width": {
+          "name": "interval_width",
+          "direction": "lower_is_better",
+          "baseline": 93.12599759127126,
+          "agent": 93.12599759127126,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        }
+      },
+      "runtime_seconds": {
+        "name": "runtime_seconds",
+        "direction": "lower_is_better",
+        "baseline": 1.6252776000183076,
+        "agent": 0.18300059996545315,
+        "delta_agent_minus_baseline": -1.4422770000528544,
+        "relative_improvement": 0.8874034811263062
+      }
+    },
+    {
+      "case_id": "005",
+      "baseline_status": "failed",
+      "agent_status": "failed",
+      "baseline_error_type": "ForecastInterfaceError",
+      "agent_error_type": "ForecastInterfaceError",
+      "baseline_error_message": "all fallback models failed: 10 non-finite training value(s); baseline models do not impute or drop them.",
+      "agent_error_message": "10 non-finite training value(s); baseline models do not impute or drop them.",
+      "review_required": false,
+      "retry_number": 0,
+      "metrics": {
+        "wis": {
+          "name": "wis",
+          "direction": "lower_is_better",
+          "baseline": null,
+          "agent": null,
+          "delta_agent_minus_baseline": null,
+          "relative_improvement": null
+        },
+        "smape": {
+          "name": "smape",
+          "direction": "lower_is_better",
+          "baseline": null,
+          "agent": null,
+          "delta_agent_minus_baseline": null,
+          "relative_improvement": null
+        },
+        "wmape": {
+          "name": "wmape",
+          "direction": "lower_is_better",
+          "baseline": null,
+          "agent": null,
+          "delta_agent_minus_baseline": null,
+          "relative_improvement": null
+        },
+        "mase": {
+          "name": "mase",
+          "direction": "lower_is_better",
+          "baseline": null,
+          "agent": null,
+          "delta_agent_minus_baseline": null,
+          "relative_improvement": null
+        },
+        "interval_coverage": {
+          "name": "interval_coverage",
+          "direction": "higher_is_better",
+          "baseline": null,
+          "agent": null,
+          "delta_agent_minus_baseline": null,
+          "relative_improvement": null
+        },
+        "interval_width": {
+          "name": "interval_width",
+          "direction": "lower_is_better",
+          "baseline": null,
+          "agent": null,
+          "delta_agent_minus_baseline": null,
+          "relative_improvement": null
+        }
+      },
+      "runtime_seconds": {
+        "name": "runtime_seconds",
+        "direction": "lower_is_better",
+        "baseline": 0.1721042999997735,
+        "agent": 0.14764570002444088,
+        "delta_agent_minus_baseline": -0.024458599975332618,
+        "relative_improvement": 0.14211498478169812
+      }
+    },
+    {
+      "case_id": "006",
+      "baseline_status": "completed",
+      "agent_status": "completed",
+      "baseline_error_type": null,
+      "agent_error_type": null,
+      "baseline_error_message": null,
+      "agent_error_message": null,
+      "review_required": true,
+      "retry_number": 0,
+      "metrics": {
+        "wis": {
+          "name": "wis",
+          "direction": "lower_is_better",
+          "baseline": 1.373060300094421,
+          "agent": 1.373060300094421,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "smape": {
+          "name": "smape",
+          "direction": "lower_is_better",
+          "baseline": 1.0565919934387582,
+          "agent": 1.0565919934387582,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "wmape": {
+          "name": "wmape",
+          "direction": "lower_is_better",
+          "baseline": 1.057164725800426,
+          "agent": 1.057164725800426,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "mase": {
+          "name": "mase",
+          "direction": "lower_is_better",
+          "baseline": 0.1475594347384051,
+          "agent": 0.1475594347384051,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "interval_coverage": {
+          "name": "interval_coverage",
+          "direction": "higher_is_better",
+          "baseline": 1.0,
+          "agent": 1.0,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "interval_width": {
+          "name": "interval_width",
+          "direction": "lower_is_better",
+          "baseline": 75.09371459724886,
+          "agent": 75.09371459724886,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        }
+      },
+      "runtime_seconds": {
+        "name": "runtime_seconds",
+        "direction": "lower_is_better",
+        "baseline": 1.856405100086704,
+        "agent": 1.2640110000502318,
+        "delta_agent_minus_baseline": -0.5923941000364721,
+        "relative_improvement": 0.31910820542822477
+      }
+    },
+    {
+      "case_id": "007",
+      "baseline_status": "completed",
+      "agent_status": "completed",
+      "baseline_error_type": null,
+      "agent_error_type": null,
+      "baseline_error_message": null,
+      "agent_error_message": null,
+      "review_required": true,
+      "retry_number": 0,
+      "metrics": {
+        "wis": {
+          "name": "wis",
+          "direction": "lower_is_better",
+          "baseline": 0.3088483265521366,
+          "agent": 0.3088483265521366,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "smape": {
+          "name": "smape",
+          "direction": "lower_is_better",
+          "baseline": 0.7681591150668984,
+          "agent": 0.7681591150668984,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "wmape": {
+          "name": "wmape",
+          "direction": "lower_is_better",
+          "baseline": 0.7683096906962511,
+          "agent": 0.7683096906962511,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "mase": {
+          "name": "mase",
+          "direction": "lower_is_better",
+          "baseline": 0.23611995182205767,
+          "agent": 0.23611995182205767,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "interval_coverage": {
+          "name": "interval_coverage",
+          "direction": "higher_is_better",
+          "baseline": 1.0,
+          "agent": 1.0,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "interval_width": {
+          "name": "interval_width",
+          "direction": "lower_is_better",
+          "baseline": 12.851269684485446,
+          "agent": 12.851269684485446,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        }
+      },
+      "runtime_seconds": {
+        "name": "runtime_seconds",
+        "direction": "lower_is_better",
+        "baseline": 1.4464906000066549,
+        "agent": 1.7049624000210315,
+        "delta_agent_minus_baseline": 0.25847180001437664,
+        "relative_improvement": -0.1786888902099934
+      }
+    },
+    {
+      "case_id": "008",
+      "baseline_status": "completed",
+      "agent_status": "completed",
+      "baseline_error_type": null,
+      "agent_error_type": null,
+      "baseline_error_message": null,
+      "agent_error_message": null,
+      "review_required": true,
+      "retry_number": 0,
+      "metrics": {
+        "wis": {
+          "name": "wis",
+          "direction": "lower_is_better",
+          "baseline": 0.3389034976367961,
+          "agent": 0.3389034976367961,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "smape": {
+          "name": "smape",
+          "direction": "lower_is_better",
+          "baseline": 1.3273847444211475,
+          "agent": 1.3273847444211475,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "wmape": {
+          "name": "wmape",
+          "direction": "lower_is_better",
+          "baseline": 1.2816719437686466,
+          "agent": 1.2816719437686466,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "mase": {
+          "name": "mase",
+          "direction": "lower_is_better",
+          "baseline": 0.2417321694916486,
+          "agent": 0.2417321694916486,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "interval_coverage": {
+          "name": "interval_coverage",
+          "direction": "higher_is_better",
+          "baseline": 1.0,
+          "agent": 1.0,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "interval_width": {
+          "name": "interval_width",
+          "direction": "lower_is_better",
+          "baseline": 13.957055293957996,
+          "agent": 13.957055293957996,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        }
+      },
+      "runtime_seconds": {
+        "name": "runtime_seconds",
+        "direction": "lower_is_better",
+        "baseline": 2.3432255999650806,
+        "agent": 0.7982332000974566,
+        "delta_agent_minus_baseline": -1.544992399867624,
+        "relative_improvement": 0.6593442816136218
+      }
+    },
+    {
+      "case_id": "009",
+      "baseline_status": "completed",
+      "agent_status": "completed",
+      "baseline_error_type": null,
+      "agent_error_type": null,
+      "baseline_error_message": null,
+      "agent_error_message": null,
+      "review_required": true,
+      "retry_number": 0,
+      "metrics": {
+        "wis": {
+          "name": "wis",
+          "direction": "lower_is_better",
+          "baseline": 0.41854612332668967,
+          "agent": 0.649078216835026,
+          "delta_agent_minus_baseline": 0.2305320935083363,
+          "relative_improvement": -0.550792566601789
+        },
+        "smape": {
+          "name": "smape",
+          "direction": "lower_is_better",
+          "baseline": 57.14285714285714,
+          "agent": 28.57142857142857,
+          "delta_agent_minus_baseline": -28.57142857142857,
+          "relative_improvement": 0.5
+        },
+        "wmape": {
+          "name": "wmape",
+          "direction": "lower_is_better",
+          "baseline": 133.33333333333334,
+          "agent": 100.0,
+          "delta_agent_minus_baseline": -33.33333333333334,
+          "relative_improvement": 0.25000000000000006
+        },
+        "mase": {
+          "name": "mase",
+          "direction": "lower_is_better",
+          "baseline": 0.3938531587933978,
+          "agent": 0.29538986909504833,
+          "delta_agent_minus_baseline": -0.09846328969834944,
+          "relative_improvement": 0.25
+        },
+        "interval_coverage": {
+          "name": "interval_coverage",
+          "direction": "higher_is_better",
+          "baseline": 1.0,
+          "agent": 1.0,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "interval_width": {
+          "name": "interval_width",
+          "direction": "lower_is_better",
+          "baseline": 13.68419597102994,
+          "agent": 30.373264438672955,
+          "delta_agent_minus_baseline": 16.689068467643015,
+          "relative_improvement": -1.219587069855951
+        }
+      },
+      "runtime_seconds": {
+        "name": "runtime_seconds",
+        "direction": "lower_is_better",
+        "baseline": 1.2932192999869585,
+        "agent": 0.26612860010936856,
+        "delta_agent_minus_baseline": -1.02709069987759,
+        "relative_improvement": 0.7942123195098834
+      }
+    },
+    {
+      "case_id": "010",
+      "baseline_status": "completed",
+      "agent_status": "completed",
+      "baseline_error_type": null,
+      "agent_error_type": null,
+      "baseline_error_message": null,
+      "agent_error_message": null,
+      "review_required": true,
+      "retry_number": 0,
+      "metrics": {
+        "wis": {
+          "name": "wis",
+          "direction": "lower_is_better",
+          "baseline": 0.8923807354572151,
+          "agent": 1.0485603997169881,
+          "delta_agent_minus_baseline": 0.15617966425977303,
+          "relative_improvement": -0.17501460761560894
+        },
+        "smape": {
+          "name": "smape",
+          "direction": "lower_is_better",
+          "baseline": 12.942414579801628,
+          "agent": 13.953894366490575,
+          "delta_agent_minus_baseline": 1.0114797866889464,
+          "relative_improvement": -0.0781523247035755
+        },
+        "wmape": {
+          "name": "wmape",
+          "direction": "lower_is_better",
+          "baseline": 11.69278523964581,
+          "agent": 14.25843467856462,
+          "delta_agent_minus_baseline": 2.565649438918811,
+          "relative_improvement": -0.2194215823121137
+        },
+        "mase": {
+          "name": "mase",
+          "direction": "lower_is_better",
+          "baseline": 1.2512408772250045,
+          "agent": 1.5257901303593124,
+          "delta_agent_minus_baseline": 0.2745492531343079,
+          "relative_improvement": -0.21942158231211387
+        },
+        "interval_coverage": {
+          "name": "interval_coverage",
+          "direction": "higher_is_better",
+          "baseline": 0.7142857142857143,
+          "agent": 1.0,
+          "delta_agent_minus_baseline": 0.2857142857142857,
+          "relative_improvement": 0.39999999999999997
+        },
+        "interval_width": {
+          "name": "interval_width",
+          "direction": "lower_is_better",
+          "baseline": 4.028262661854756,
+          "agent": 17.303418350203593,
+          "delta_agent_minus_baseline": 13.275155688348837,
+          "relative_improvement": -3.295503993336046
+        }
+      },
+      "runtime_seconds": {
+        "name": "runtime_seconds",
+        "direction": "lower_is_better",
+        "baseline": 0.17547879996709526,
+        "agent": 0.16725130006670952,
+        "delta_agent_minus_baseline": -0.008227499900385737,
+        "relative_improvement": 0.046886005044076605
+      }
+    },
+    {
+      "case_id": "011",
+      "baseline_status": "completed",
+      "agent_status": "completed",
+      "baseline_error_type": null,
+      "agent_error_type": null,
+      "baseline_error_message": null,
+      "agent_error_message": null,
+      "review_required": true,
+      "retry_number": 0,
+      "metrics": {
+        "wis": {
+          "name": "wis",
+          "direction": "lower_is_better",
+          "baseline": 0.8262155383322131,
+          "agent": 0.8262155383322131,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "smape": {
+          "name": "smape",
+          "direction": "lower_is_better",
+          "baseline": 8.010846051512498,
+          "agent": 8.010846051512498,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "wmape": {
+          "name": "wmape",
+          "direction": "lower_is_better",
+          "baseline": 7.7508030301265025,
+          "agent": 7.7508030301265025,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "mase": {
+          "name": "mase",
+          "direction": "lower_is_better",
+          "baseline": 2.8442747912613546,
+          "agent": 2.8442747912613546,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "interval_coverage": {
+          "name": "interval_coverage",
+          "direction": "higher_is_better",
+          "baseline": 1.0,
+          "agent": 1.0,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "interval_width": {
+          "name": "interval_width",
+          "direction": "lower_is_better",
+          "baseline": 8.501566262211393,
+          "agent": 8.501566262211393,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        }
+      },
+      "runtime_seconds": {
+        "name": "runtime_seconds",
+        "direction": "lower_is_better",
+        "baseline": 2.746756400214508,
+        "agent": 4.0935329999774694,
+        "delta_agent_minus_baseline": 1.3467765997629613,
+        "relative_improvement": -0.49031526773098066
+      }
+    },
+    {
+      "case_id": "012",
+      "baseline_status": "completed",
+      "agent_status": "completed",
+      "baseline_error_type": null,
+      "agent_error_type": null,
+      "baseline_error_message": null,
+      "agent_error_message": null,
+      "review_required": true,
+      "retry_number": 0,
+      "metrics": {
+        "wis": {
+          "name": "wis",
+          "direction": "lower_is_better",
+          "baseline": 1.378053705549347,
+          "agent": 1.378053705549347,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "smape": {
+          "name": "smape",
+          "direction": "lower_is_better",
+          "baseline": 5.007571943894525,
+          "agent": 5.007571943894525,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "wmape": {
+          "name": "wmape",
+          "direction": "lower_is_better",
+          "baseline": 4.963433344502448,
+          "agent": 4.963433344502448,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "mase": {
+          "name": "mase",
+          "direction": "lower_is_better",
+          "baseline": 1.8138045842945134,
+          "agent": 1.8138045842945134,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "interval_coverage": {
+          "name": "interval_coverage",
+          "direction": "higher_is_better",
+          "baseline": 1.0,
+          "agent": 1.0,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        },
+        "interval_width": {
+          "name": "interval_width",
+          "direction": "lower_is_better",
+          "baseline": 23.546748560374674,
+          "agent": 23.546748560374674,
+          "delta_agent_minus_baseline": 0.0,
+          "relative_improvement": 0.0
+        }
+      },
+      "runtime_seconds": {
+        "name": "runtime_seconds",
+        "direction": "lower_is_better",
+        "baseline": 3.1030844000633806,
+        "agent": 2.271746499929577,
+        "delta_agent_minus_baseline": -0.8313379001338035,
+        "relative_improvement": 0.2679069573862778
+      }
+    }
+  ],
+  "aggregate": {
+    "n_cases": 12,
+    "metrics": {
+      "wis": {
+        "name": "wis",
+        "direction": "lower_is_better",
+        "baseline": null,
+        "agent": null,
+        "delta_agent_minus_baseline": null,
+        "relative_improvement": null
+      },
+      "smape": {
+        "name": "smape",
+        "direction": "lower_is_better",
+        "baseline": null,
+        "agent": null,
+        "delta_agent_minus_baseline": null,
+        "relative_improvement": null
+      },
+      "wmape": {
+        "name": "wmape",
+        "direction": "lower_is_better",
+        "baseline": null,
+        "agent": null,
+        "delta_agent_minus_baseline": null,
+        "relative_improvement": null
+      },
+      "mase": {
+        "name": "mase",
+        "direction": "lower_is_better",
+        "baseline": null,
+        "agent": null,
+        "delta_agent_minus_baseline": null,
+        "relative_improvement": null
+      },
+      "interval_coverage": {
+        "name": "interval_coverage",
+        "direction": "higher_is_better",
+        "baseline": null,
+        "agent": null,
+        "delta_agent_minus_baseline": null,
+        "relative_improvement": null
+      },
+      "interval_width": {
+        "name": "interval_width",
+        "direction": "lower_is_better",
+        "baseline": null,
+        "agent": null,
+        "delta_agent_minus_baseline": null,
+        "relative_improvement": null
+      }
+    },
+    "n_cases_failed": {
+      "name": "n_cases_failed",
+      "direction": "lower_is_better",
+      "baseline": 1.0,
+      "agent": 1.0,
+      "delta_agent_minus_baseline": 0.0,
+      "relative_improvement": 0.0
+    },
+    "human_intervention_count": {
+      "name": "human_intervention_count",
+      "direction": "lower_is_better",
+      "baseline": 0.0,
+      "agent": 11.0,
+      "delta_agent_minus_baseline": 11.0,
+      "relative_improvement": null
+    },
+    "wall_seconds": {
+      "name": "wall_seconds",
+      "direction": "lower_is_better",
+      "baseline": 22.939477700041607,
+      "agent": 16.04770390014164,
+      "delta_agent_minus_baseline": -6.8917737998999655,
+      "relative_improvement": 0.30043289956368385
+    },
+    "cases_seconds": {
+      "name": "cases_seconds",
+      "direction": "lower_is_better",
+      "baseline": 22.78423530026339,
+      "agent": 15.816195000195876,
+      "delta_agent_minus_baseline": -6.968040300067514,
+      "relative_improvement": 0.3058272620625087
+    }
+  },
+  "errors": {
+    "baseline": [
+      {
+        "case_id": "005",
+        "error_type": "ForecastInterfaceError",
+        "error_message": "all fallback models failed: 10 non-finite training value(s); baseline models do not impute or drop them."
+      }
+    ],
+    "agent": [
+      {
+        "case_id": "005",
+        "error_type": "ForecastInterfaceError",
+        "error_message": "10 non-finite training value(s); baseline models do not impute or drop them."
+      }
+    ]
+  },
+  "notes": [
+    "relative_improvement is computed from the two evaluation JSON files.",
+    "Official WIS uses the full case list; failures are not dropped.",
+    "Positive relative_improvement means the agent is better for that metric.",
+    "Registered catalog case ids: ['001', '002', '003', '004', '005', '006', '007', '008', '009', '010', '011', '012']."
+  ]
+}

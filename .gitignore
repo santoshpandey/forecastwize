@@ -1,0 +1,64 @@
+# Secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# Node / Next.js
+node_modules/
+frontend/.next/
+frontend/out/
+frontend/.turbo/
+*.tsbuildinfo
+npm-debug.log*
+
+# Runtime artifacts (keep directory placeholders)
+data/**
+!data/.gitkeep
+!data/README.md
+!data/evaluation/
+!data/evaluation/**
+evaluation/artifacts/**
+!evaluation/artifacts/
+!evaluation/artifacts/exp-initial-comparison/
+!evaluation/artifacts/exp-initial-comparison/**
+!evaluation/artifacts/EXP-006-missing-policy/
+!evaluation/artifacts/EXP-006-missing-policy/**
+!evaluation/artifacts/EXP-007-retry-backtest-wis/
+!evaluation/artifacts/EXP-007-retry-backtest-wis/**
+!evaluation/artifacts/EXP-008-full-candidates/
+!evaluation/artifacts/EXP-008-full-candidates/**
+!evaluation/.gitkeep
+!evaluation/README.md
+experiments/**
+!experiments/.gitkeep
+!experiments/README.md
+!experiments/EXP-*.md
+trajectories/**
+!trajectories/.gitkeep
+!trajectories/README.md
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+
+.cursor/

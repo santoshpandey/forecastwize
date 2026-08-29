@@ -1,0 +1,5 @@
+# Keep evaluation CSV bytes stable across platforms (regeneration tests compare files).
+data/evaluation/*.csv text eol=lf
+evaluation/cases/case_registry.yaml text eol=lf
+*.sh text eol=lf
+Makefile text eol=lf

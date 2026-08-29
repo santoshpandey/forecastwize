@@ -1,0 +1,235 @@
+catalog_id: forecastwize-eval-v1
+catalog_version: 1
+notes: >
+  Shared identical cases for baseline and advanced systems. Each CSV is
+  train (history_length rows) followed by holdout (forecast_horizon rows).
+  Do not edit CSVs by hand. Regenerate with python -m evaluation.cases.generators.
+  This file contains no scores.
+
+cases:
+  - case_id: "001"
+    name: trend
+    description: Smooth linear trend with low noise. Daily series.
+    frequency: D
+    history_length: 180
+    forecast_horizon: 14
+    expected_challenge: trend
+    random_seed: 1001
+    start_timestamp: "2019-01-01T00:00:00Z"
+    csv_filename: 001_trend.csv
+    generation:
+      kind: trend
+      intercept: 20.0
+      slope: 0.12
+      noise_std: 0.15
+
+  - case_id: "002"
+    name: stable_seasonality
+    description: Stable weekly seasonality with no trend. Daily series.
+    frequency: D
+    history_length: 168
+    forecast_horizon: 14
+    expected_challenge: seasonality
+    random_seed: 1002
+    start_timestamp: "2019-01-01T00:00:00Z"
+    csv_filename: 002_stable_seasonality.csv
+    generation:
+      kind: seasonality
+      intercept: 40.0
+      slope: 0.0
+      noise_std: 0.4
+      seasonal_period: 7
+      seasonal_amplitude: 8.0
+
+  - case_id: "003"
+    name: trend_seasonality
+    description: Linear trend plus weekly seasonality. Daily series.
+    frequency: D
+    history_length: 210
+    forecast_horizon: 14
+    expected_challenge: trend_seasonality
+    random_seed: 1003
+    start_timestamp: "2019-01-01T00:00:00Z"
+    csv_filename: 003_trend_seasonality.csv
+    generation:
+      kind: trend_seasonality
+      intercept: 15.0
+      slope: 0.08
+      noise_std: 0.35
+      seasonal_period: 7
+      seasonal_amplitude: 6.0
+
+  - case_id: "004"
+    name: noisy_trend
+    description: Linear trend dominated by high Gaussian noise.
+    frequency: D
+    history_length: 180
+    forecast_horizon: 14
+    expected_challenge: noisy_series
+    random_seed: 1004
+    start_timestamp: "2019-01-01T00:00:00Z"
+    csv_filename: 004_noisy_trend.csv
+    generation:
+      kind: noisy_trend
+      intercept: 50.0
+      slope: 0.05
+      noise_std: 6.5
+
+  - case_id: "005"
+    name: missing_values
+    description: >
+      Weekly seasonality with a fraction of training values left as missing
+      (empty CSV cells). Holdout values are complete. Timestamps stay regular.
+    frequency: D
+    history_length: 126
+    forecast_horizon: 14
+    expected_challenge: missing_values
+    random_seed: 1005
+    start_timestamp: "2019-01-01T00:00:00Z"
+    csv_filename: 005_missing_values.csv
+    generation:
+      kind: missing_values
+      intercept: 30.0
+      slope: 0.04
+      noise_std: 0.5
+      seasonal_period: 7
+      seasonal_amplitude: 4.0
+      missing_fraction: 0.08
+
+  - case_id: "006"
+    name: outliers
+    description: Mild trend with large additive outliers in the training window only.
+    frequency: D
+    history_length: 150
+    forecast_horizon: 14
+    expected_challenge: outliers
+    random_seed: 1006
+    start_timestamp: "2019-01-01T00:00:00Z"
+    csv_filename: 006_outliers.csv
+    generation:
+      kind: outliers
+      intercept: 25.0
+      slope: 0.06
+      noise_std: 0.4
+      n_outliers: 5
+      outlier_magnitude: 28.0
+
+  - case_id: "007"
+    name: structural_break
+    description: Level shift at a fixed training index; slope otherwise unchanged.
+    frequency: D
+    history_length: 160
+    forecast_horizon: 14
+    expected_challenge: structural_break
+    random_seed: 1007
+    start_timestamp: "2019-01-01T00:00:00Z"
+    csv_filename: 007_structural_break.csv
+    generation:
+      kind: structural_break
+      intercept: 18.0
+      slope: 0.03
+      noise_std: 0.45
+      break_index: 80
+      break_shift: 14.0
+
+  - case_id: "008"
+    name: event_context_change
+    description: >
+      Documented promo campaign (context/event columns) with a temporary level
+      shift during the event window.
+    frequency: D
+    history_length: 140
+    forecast_horizon: 14
+    expected_challenge: contextual_event_change
+    random_seed: 1008
+    start_timestamp: "2019-01-01T00:00:00Z"
+    csv_filename: 008_event_context_change.csv
+    generation:
+      kind: event_context
+      intercept: 22.0
+      slope: 0.02
+      noise_std: 0.35
+      seasonal_period: 7
+      seasonal_amplitude: 3.0
+      event_start_index: 42
+      event_length: 21
+      event_shift: 9.0
+
+  - case_id: "009"
+    name: intermittent_demand
+    description: Many zeros with occasional integer demand draws (intermittent).
+    frequency: D
+    history_length: 180
+    forecast_horizon: 14
+    expected_challenge: intermittent_demand
+    random_seed: 1009
+    start_timestamp: "2019-01-01T00:00:00Z"
+    csv_filename: 009_intermittent_demand.csv
+    generation:
+      kind: intermittent
+      occurrence_probability: 0.22
+      demand_low: 1
+      demand_high: 8
+
+  - case_id: "010"
+    name: short_history
+    description: Very short training history relative to a weekly seasonal period.
+    frequency: D
+    history_length: 16
+    forecast_horizon: 7
+    expected_challenge: short_history
+    random_seed: 1010
+    start_timestamp: "2019-01-01T00:00:00Z"
+    csv_filename: 010_short_history.csv
+    generation:
+      kind: short_history
+      intercept: 12.0
+      slope: 0.2
+      noise_std: 0.5
+      seasonal_period: 7
+      seasonal_amplitude: 3.0
+
+  - case_id: "011"
+    name: long_horizon
+    description: Daily series with a long holdout relative to weekly seasonality.
+    frequency: D
+    history_length: 365
+    forecast_horizon: 90
+    expected_challenge: long_horizon
+    random_seed: 1011
+    start_timestamp: "2019-01-01T00:00:00Z"
+    csv_filename: 011_long_horizon.csv
+    generation:
+      kind: long_horizon
+      intercept: 10.0
+      slope: 0.04
+      noise_std: 0.6
+      seasonal_period: 7
+      seasonal_amplitude: 5.0
+
+  - case_id: "012"
+    name: adversarial_regime_change
+    description: >
+      Weekly seasonality and trend, then a late-training regime change (level
+      jump, inverted seasonality, noisier residuals) that continues through the
+      holdout. Early context/event labels are spurious and must not be treated
+      as a continuing cause.
+    frequency: D
+    history_length: 210
+    forecast_horizon: 28
+    expected_challenge: adversarial_regime_change
+    random_seed: 1012
+    start_timestamp: "2019-01-01T00:00:00Z"
+    csv_filename: 012_adversarial_regime_change.csv
+    generation:
+      kind: adversarial_regime
+      intercept: 30.0
+      slope: 0.05
+      noise_std: 0.5
+      seasonal_period: 7
+      seasonal_amplitude: 7.0
+      regime_change_index: 168
+      regime_level_shift: 18.0
+      regime_seasonal_sign: -1.0
+      regime_noise_std: 2.8
+      spurious_event_end_index: 60

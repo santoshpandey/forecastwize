@@ -1,0 +1,101 @@
+name: Evaluation
+
+# Catalog WIS harness. Not run on every commit. No vendor LLM. No repository secrets.
+on:
+  workflow_dispatch:
+    inputs:
+      run_baseline:
+        description: Run the conventional baseline harness (shared catalog; no LLM)
+        type: boolean
+        default: true
+      run_agent:
+        description: Run the agent catalog harness (slow; still no LLM / no secrets)
+        type: boolean
+        default: false
+      compare_committed:
+        description: Compare committed evaluation/results JSON only (no catalog re-run)
+        type: boolean
+        default: false
+
+concurrency:
+  group: evaluation-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  PYTHONUNBUFFERED: "1"
+  OPENAI_API_KEY: ""
+
+jobs:
+  evaluation:
+    name: Catalog evaluation
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - name: Install backend pins
+        run: python -m pip install --upgrade pip && python -m pip install -r backend/requirements.txt
+      - name: Show toolchain (for diagnosis)
+        run: |
+          python --version
+          python -c "from importlib import metadata as m; print('pandas', m.version('pandas')); print('numpy', m.version('numpy')); print('scipy', m.version('scipy')); print('statsmodels', m.version('statsmodels'))"
+          echo "OPENAI_API_KEY is empty (orchestrator does not call an LLM)."
+          echo "git=$(git rev-parse HEAD)"
+          echo "run_baseline=${{ github.event.inputs.run_baseline }}"
+          echo "run_agent=${{ github.event.inputs.run_agent }}"
+          echo "compare_committed=${{ github.event.inputs.compare_committed }}"
+      - name: Create output directory
+        run: mkdir -p "evaluation/artifacts/ci-${{ github.run_id }}"
+      - name: Baseline harness
+        if: github.event.inputs.run_baseline == 'true'
+        run: |
+          python evaluation/run_baseline.py \
+            --output-json "evaluation/artifacts/ci-${{ github.run_id }}/baseline.json" \
+            --output-md "evaluation/artifacts/ci-${{ github.run_id }}/baseline.md"
+      - name: Agent harness (opt-in; not LLM)
+        if: github.event.inputs.run_agent == 'true'
+        run: |
+          python evaluation/run_agent.py \
+            --output-json "evaluation/artifacts/ci-${{ github.run_id }}/agent.json" \
+            --output-md "evaluation/artifacts/ci-${{ github.run_id }}/agent.md"
+      - name: Compare this run (baseline + agent both produced)
+        if: github.event.inputs.run_baseline == 'true' && github.event.inputs.run_agent == 'true'
+        run: |
+          python evaluation/compare.py \
+            --baseline "evaluation/artifacts/ci-${{ github.run_id }}/baseline.json" \
+            --agent "evaluation/artifacts/ci-${{ github.run_id }}/agent.json" \
+            --output-json "evaluation/artifacts/ci-${{ github.run_id }}/comparison.json"
+      - name: Compare committed evaluation/results (no re-run)
+        if: github.event.inputs.compare_committed == 'true'
+        run: |
+          python evaluation/compare.py \
+            --baseline evaluation/results/baseline.json \
+            --agent evaluation/results/agent.json \
+            --output-json "evaluation/artifacts/ci-${{ github.run_id }}/comparison-committed.json"
+      - name: Summarize outputs
+        if: always()
+        run: |
+          echo "::notice::Outputs under evaluation/artifacts/ci-${{ github.run_id }}/ (also uploaded as a workflow artifact)."
+          ls -la "evaluation/artifacts/ci-${{ github.run_id }}" || true
+          if [ ! -f "evaluation/artifacts/ci-${{ github.run_id }}/baseline.json" ] \
+            && [ ! -f "evaluation/artifacts/ci-${{ github.run_id }}/agent.json" ] \
+            && [ ! -f "evaluation/artifacts/ci-${{ github.run_id }}/comparison-committed.json" ]; then
+            echo "::warning::No evaluation JSON was written. Enable run_baseline, run_agent, and/or compare_committed."
+          fi
+      - name: Upload evaluation artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evaluation-ci-${{ github.run_id }}
+          path: evaluation/artifacts/ci-${{ github.run_id }}/
+          if-no-files-found: warn
+          retention-days: 30

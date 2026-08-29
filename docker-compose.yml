@@ -1,0 +1,45 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      APP_ENV: production
+      LOG_LEVEL: INFO
+      CORS_ORIGINS: http://localhost:3000
+      API_HOST: 0.0.0.0
+      API_PORT: 8000
+      OPENAI_API_KEY: ""
+      API_STORE_DIR: /app/data/api
+      MAX_UPLOAD_BYTES: "10485760"
+      MAX_INFLIGHT_JOBS: "4"
+    volumes:
+      - api-store:/app/data/api
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5)",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  api-store:
