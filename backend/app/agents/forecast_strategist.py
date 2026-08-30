@@ -999,12 +999,7 @@ def _record_robustness_model_events(
     evidence_ids: list[str],
 ) -> None:
     for row in analysis.models:
-        if row.vetoed:
-            event_type = "MODEL_VETOED"
-        elif row.official_eligible and row.selectable:
-            event_type = "MODEL_ELIGIBLE"
-        else:
-            event_type = "MODEL_ELIGIBLE"
+        event_type = "MODEL_VETOED" if row.vetoed else "MODEL_ELIGIBLE"
         _record_step(
             state,
             created=created,
