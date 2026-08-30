@@ -6,8 +6,19 @@ yhat, interval, and metric. An LLM must never invent a forecast number.
 
 **Official result (do not remember a percentage):**
 `evaluation/results/comparison.json`, `comparison_id`
-`comparison-20260829T125254Z`. Official holdout WIS
-`aggregate.metrics.wis.relative_improvement` is **0.0** (parity, not a win).
+`comparison-20260830T030644Z`. Official advanced path is **EXP-010**
+(`selection_policy=exp010`, `origin_planning=model_specific`,
+`EXP010_LAST_TO_EARLIER_VETO=5.0`).
+
+| Official WIS | Value |
+|---|---|
+| Baseline | **0.9153325914744158** (~0.91533) |
+| Advanced | **0.7939144093884205** (~0.79391) |
+| Relative improvement | **0.13264925035654543** (~**13.26%**) |
+
+12 / 12 cases completed, 0 failed. Holdout: **8** advanced wins, **2**
+baseline wins, **2** ties. Case **012** remains a baseline win. Do not
+claim every case or every metric improved.
 
 **Reproduction (pins, seeds, commands):** [docs/reproduction.md](docs/reproduction.md).
 
@@ -54,11 +65,13 @@ ForecastWize splits the work:
 | Deterministic Python | Fit, yhat, intervals, backtests, WIS and secondaries, named train-only missing-value fill |
 | API / UI | Transport and display of backend values; labeled Accept / Reject / Review |
 
-The graph is an explicit typed state machine (`run_orchestrator`). Selection
-is official rolling-origin **backtest WIS** on the four named baselines.
-Generation is a separate `run_baseline_forecast` call. The verifier
+The graph is an explicit typed state machine (`run_orchestrator`). Official
+advanced selection is **EXP-010**: model-specific valid backtest origins plus
+a deterministic last/earlier fold-WIS veto (`R=5`), then official backtest
+WIS among models that pass. The LLM/agent does **not** generate yhat, WIS, or
+the veto. Generation is a separate `run_baseline_forecast` call. The verifier
 **challenges** the forecast (PASS / WARN / FAIL). FAIL retries only if an
-untried model has strictly better official backtest WIS.
+untried **selectable** model has strictly better official backtest WIS.
 
 ## Baseline
 
@@ -73,7 +86,7 @@ Non-agent path: `python evaluation/run_baseline.py`.
 - No LLM. No graph.
 
 Cited run: `evaluation/results/baseline.json`,
-`evaluation_run_id` `baseline-20260829T125209Z`.
+`evaluation_run_id` `baseline-20260830T020244Z`.
 
 ## Advanced architecture
 
@@ -90,7 +103,8 @@ Nodes: START → PROFILE → DIAGNOSE → CONTEXT → STRATEGY → BACKTEST → 
 - Trajectory is append-only JSONL (`app/evidence`).
 
 Cited run: `evaluation/results/agent.json`,
-`evaluation_run_id` `agent-20260829T125231Z`.
+`evaluation_run_id` `agent-20260830T030413Z`
+(`selection_policy=exp010`).
 
 Details: [docs/architecture.md](docs/architecture.md),
 [docs/agent-design.md](docs/agent-design.md).
@@ -171,51 +185,50 @@ API keys.
 ## Results
 
 Source of truth: `evaluation/results/comparison.json`
-(`comparison_id` `comparison-20260829T125254Z`;
+(`comparison_id` `comparison-20260830T030644Z`;
 `case_lists_identical` true; `git_commit`
-`54c0a145b55808e8f68474f0485c80cb430dbcd3`).
+`524837b0ea8a9378f7d9d6601d080eceff602431`).
 
 | Field in that JSON | Value |
 |---|---|
-| `aggregate.metrics.wis.relative_improvement` | **0.0** |
-| `aggregate.metrics.wis.baseline` / `.agent` | both `0.9153325914744158` |
-| `aggregate.n_cases_failed` | 0 / 0 |
-| `aggregate.human_intervention_count` | baseline 0, agent **12** |
-| `aggregate.metrics.wall_seconds.relative_improvement` | `-0.162447985912265` (agent slower) |
+| `aggregate.metrics.wis.relative_improvement` | **0.13264925035654543** (~13.26%) |
+| `aggregate.metrics.wis.baseline` | `0.9153325914744158` |
+| `aggregate.metrics.wis.agent` | `0.7939144093884205` |
+| `aggregate.n_cases_failed` | 0 / 0 (all 12 cases) |
+| Holdout case outcomes | advanced **8**, baseline **2**, ties **2** |
+| `aggregate.human_intervention_count` | baseline 0, agent **12** (checkpoints opened, not human decisions) |
 
-No completed case has holdout WIS `relative_improvement` greater than 0.
-Do not cite `wis_completed_only` as the headline. Isolated experiment pairs
-(EXP-006–008 and the first catalog control) live under
-`evaluation/artifacts/` and are summarized in [docs/changelog.md](docs/changelog.md).
+Do not claim the advanced system wins every case. Case **012** still loses
+holdout WIS to baseline (naive 3.114 vs seasonal_naive 1.378). Do not cite
+`wis_completed_only` as the headline. Isolated experiment pairs and the
+pre-promotion official archive live under `evaluation/artifacts/` and are
+summarized in [docs/changelog.md](docs/changelog.md).
 
 ### Biggest improvement
 
-**Not an official WIS win vs baseline** (current `relative_improvement` is 0.0).
+Official catalog WIS improved **13.26%** vs the conventional baseline
+(`relative_improvement` **0.13264925035654543**). The largest per-case
+holdout WIS gain on the official pair is case **001** (ARIMA vs naive,
+`relative_improvement` **0.894**).
 
-The largest **measured experiment** recovery is case **003** (trend +
-seasonality). In
-`evaluation/artifacts/EXP-006-missing-policy/comparison.json`
-(`comparison-20260829T124600Z`), case 003 WIS `relative_improvement` is
-**-5.145124275946384** (agent retried to `naive`). In
-`evaluation/artifacts/EXP-007-retry-backtest-wis/comparison.json`
-(`comparison-20260829T125037Z`) and the current official pair, case 003
-`relative_improvement` is **0.0** (both sides `seasonal_naive`). EXP-006 is
-the change that made official catalog WIS **non-null** (005 completed).
+Earlier experiment recovery (not the current headline): case **003** WIS
+`relative_improvement` was **-5.145…** in EXP-006 and **0.0** in EXP-007
+after retry-only-if-better-WIS.
 
 ### Biggest failure
 
-On the official pair, the advanced path **does not beat** the baseline on WIS.
-The largest remaining measured gap vs baseline is **human intervention**:
-`human_intervention_count` **12** vs **0** (every agent case
-`verification_overall` WARN → `waiting_for_approval`). That field is in
-`evaluation/results/comparison.json` `aggregate.human_intervention_count`.
-
-Before EXP-007, the largest **WIS** loss was case 003 (artifact above).
+Case **012** (adversarial regime change) still loses holdout WIS: advanced
+naive **3.114** vs baseline seasonal_naive **1.378**. EXP-009 had selected
+ETS at **22.83**; the EXP-010 veto cut that catastrophe but did not make
+the advanced path better than baseline on this case. Case **007** also
+loses. Human interventions remain **12** vs **0**.
 
 ### Removed experiment
 
-**None.** No approach was scored and then withdrawn. See changelog
-[Removed experiment](docs/changelog.md).
+**EXP-009** model-specific origins without the instability veto. Isolated
+WIS `relative_improvement` **−1.662**. Default was restored, then EXP-010
+was promoted. Artifacts:
+`evaluation/artifacts/EXP-009-ets-arima-min-train/`.
 
 ### Main engineering lesson
 
@@ -227,17 +240,25 @@ yhat.
 
 ## Limitations
 
-- Official WIS parity is **not** superiority. The agent did not win any case
-  on holdout WIS in the cited comparison.
-- Every evaluation case still trips a human checkpoint (WARN).
+- Official catalog WIS improved **13.26%**, but the advanced path does
+  **not** win every holdout case (8 / 2 / 2). Case **012** still loses
+  to baseline. sMAPE / WMAPE are not the headline; do not claim all
+  metrics improved.
+- Automated evaluation opens a human checkpoint on every case (WARN).
+  `human_intervention_count` **12** means **checkpoints opened**, not
+  12 human decisions. Official catalog records **0** human decisions.
+  One real Accept is in the interactive demo
+  ([docs/human-in-the-loop-demo.md](docs/human-in-the-loop-demo.md)).
 - Authentication is **not started**. Do not publish the API on a shared
   network ([docs/security.md](docs/security.md)).
-- No vendor LLM is wired. `OPENAI_API_KEY` may be empty.
+- No vendor LLM is wired. `OPENAI_API_KEY` may be empty. Deterministic
+  Python selects the model from backtest / robustness evidence; an LLM
+  does not pick the winner.
 - Catalog is synthetic (12 fixed cases). Optional ML was not added (no
   evaluation evidence that it would improve WIS).
-- Catalog evaluation writes trajectories only if `persist_trajectory` is
-  enabled; the default agent harness does not (`holdout_passed_to_graph`:
-  false in `evaluation/results/agent.json`).
+- Official catalog evaluation persists one JSONL per case under
+  `evaluation/results/trajectories/` (`holdout_passed_to_graph` remains
+  false). See [docs/trajectory-evidence.md](docs/trajectory-evidence.md).
 
 ## Reproducibility
 
@@ -257,8 +278,14 @@ Append-only JSONL via `backend/app/evidence/`. Schema and reviewer sequence:
 - **UI / API runs:** `{run_id}.jsonl` under the API store (`data/api/`,
   gitignored) plus `GET /runs/{id}/trajectory`.
 - **Catalog harness:** `evaluation/run_agent.py` defaults
-  `persist_trajectory=False`. Enable it only when you intend to write run
-  files; do not treat missing eval JSONL as a missing graph.
+  `persist_trajectory=True` and writes
+  `evaluation/results/trajectories/<evaluation_run_id>/case_*.jsonl`.
+  Fixture JSONL under `backend/tests/fixtures/trajectories/` is not a
+  catalog run.
+- **Interactive human demo:** one real Accept / Reject / Review under
+  `evaluation/artifacts/human-demo/`. See
+  [docs/human-in-the-loop-demo.md](docs/human-in-the-loop-demo.md).
+  Official catalog still has 12 opened checkpoints and 0 human decisions.
 
 Each line includes `run_id`, `agent_id`, `timestamp`, hashed input summary,
 `tool_invocation` / `tool_output_ref`, `decision`, `evidence_ids`,
@@ -288,6 +315,7 @@ redacted. Failures are kept.
 - [Reproduction](docs/reproduction.md)
 - [Security](docs/security.md)
 - [Demo script](docs/demo-script.md)
+- [Human-in-the-loop demo](docs/human-in-the-loop-demo.md)
 - [Changelog](docs/changelog.md)
 
 ## Layout

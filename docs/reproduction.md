@@ -17,9 +17,10 @@ named below.
 | Evaluation catalog | `catalog_id`: `forecastwize-eval-v1`, `catalog_version`: **1** |
 | Case registry | `evaluation/cases/case_registry.yaml` |
 | Coverage / backtest | coverage `0.95`; expanding window; target 5 folds |
-| Official baseline run | `evaluation_run_id` `baseline-20260829T125209Z` |
-| Official agent run | `evaluation_run_id` `agent-20260829T125231Z` |
-| Official comparison | `comparison_id` `comparison-20260829T125254Z` |
+| Official baseline run | `evaluation_run_id` `baseline-20260830T020244Z` |
+| Official agent run | `evaluation_run_id` `agent-20260830T030413Z` |
+| Official comparison | `comparison_id` `comparison-20260830T030644Z` |
+| Official advanced policy | `selection_policy=exp010` (`R=5` frozen) |
 
 ### Backend pins (`backend/requirements.txt`)
 
@@ -233,7 +234,7 @@ Writes:
 - `evaluation/results/baseline.md`
 
 Stdout includes `case_list`, `official_wis`, and `n_failed`. Official aggregate
-WIS is **null** when any case fails. The committed EXP-008 pair has
+WIS is **null** when any case fails. The committed official pair has
 `n_failed` 0. Do not use completed-only WIS as the official number.
 
 Optional paths (does not change Make defaults):
@@ -253,19 +254,41 @@ not passed into the graph.
 make evaluate-agent
 ```
 
-Equivalent:
+Equivalent (official promoted EXP-010; no experimental flag):
 
 ```bash
 python evaluation/run_agent.py
 ```
 
-Writes:
+**CURRENT OFFICIAL.** Today's default is `selection_policy=exp010`
+(`origin_planning=model_specific`, frozen `R=5.0`). This is **not**
+EXP-008 shared-origin ranking and **not** EXP-009 planner-only.
+
+Re-running with default output paths **overwrites**
+`evaluation/results/agent.json`, `agent.md`, and the trajectory directory
+for a new `evaluation_run_id`. Copy the cited official pair aside first
+if you need to keep those files.
+
+Historical reproduction (do **not** rely on today's default):
+
+```bash
+# EXP-009 (failed WIS; planner only, no veto — not today's official path)
+python evaluation/run_agent.py --origin-planning model_specific --selection-policy default --output-json evaluation/artifacts/EXP-009-ets-arima-min-train/agent.json --output-md evaluation/artifacts/EXP-009-ets-arima-min-train/agent.md
+
+# Frozen EXP-010 isolate (same policy as official default; write only to the isolate)
+python evaluation/run_agent.py --selection-policy exp010 --output-json evaluation/artifacts/EXP-010-robust-model-selection/agent.json --output-md evaluation/artifacts/EXP-010-robust-model-selection/agent.md
+```
+
+A bare `--origin-planning model_specific` is treated as historical EXP-009
+(planner only, no veto). Official default needs no flag.
+
+Writes (default paths):
 
 - `evaluation/results/agent.json`
 - `evaluation/results/agent.md`
+- `evaluation/results/trajectories/<evaluation_run_id>/` (12 case JSONL)
 
-This run can take several minutes. It overwrites the agent JSON if you use the
-default paths.
+This run can take several minutes.
 
 ---
 
@@ -358,7 +381,8 @@ artifact; committed `evaluation/results/` is not overwritten.
 | `evaluation/results/agent.json` | Agent harness on the same cases |
 | `evaluation/results/agent.md` | Agent summary |
 | `evaluation/results/comparison.json` | Computed deltas; `comparison_id`; cites the two `evaluation_run_id`s |
-| `evaluation/artifacts/EXP-*/` | Isolated experiment pairs (006–008) |
+| `evaluation/artifacts/EXP-*/` | Isolated experiment pairs (006–010). EXP-009 is historical/failed. EXP-010 isolate matches the official advanced policy. |
+| `evaluation/artifacts/pre-exp010-promotion/` | Archived official EXP-008 pair from before this promotion |
 | `evaluation/artifacts/exp-initial-comparison/` | Frozen first catalog pair (official WIS null) |
 | `backend/tests/fixtures/trajectories/*.jsonl` | Checked-in agent trajectory examples |
 | `data/evaluation/*.csv` | Shared synthetic cases (committed; regenerate only via the generator) |
@@ -366,11 +390,14 @@ artifact; committed `evaluation/results/` is not overwritten.
 
 **Cited official artifacts** (do not replace these IDs with remembered WIS):
 
-- `baseline-20260829T125209Z`
-- `agent-20260829T125231Z`
-- `comparison-20260829T125254Z`
+- `baseline-20260830T020244Z`
+- `agent-20260830T030413Z`
+- `comparison-20260830T030644Z`
 
-(EXP-008 pair, also under `evaluation/artifacts/EXP-008-full-candidates/`.)
+(Promoted EXP-010 pair. Frozen isolate:
+`evaluation/artifacts/EXP-010-robust-model-selection/`. Previous official
+EXP-008 pair: `evaluation/artifacts/pre-exp010-promotion/` and
+`evaluation/artifacts/EXP-008-full-candidates/`.)
 The pre-iteration control is `evaluation/artifacts/exp-initial-comparison/`
 (`baseline-20260829T123106Z` / `agent-20260829T123136Z` /
 `comparison-20260829T123158Z`).
@@ -394,18 +421,22 @@ Schema and reviewer sequence: [trajectories/README.md](../trajectories/README.md
 | `backend/tests/fixtures/trajectories/*.jsonl` | Checked-in examples (success, verification retry, tool failure) |
 | `GET /runs/{id}/trajectory` | Live run JSONL after `POST /runs` |
 | API store `trajectories/{run_id}.jsonl` | Same file on disk (`data/api/` default; gitignored) |
-| Catalog `run_agent.py` | Default `persist_trajectory=False` (see `evaluation/results/agent.json`) |
+| Catalog `run_agent.py` | Default `persist_trajectory=True`; writes `evaluation/results/trajectories/<evaluation_run_id>/` (see [docs/trajectory-evidence.md](trajectory-evidence.md)) |
+| Official catalog traces | 12 real files: `evaluation/results/trajectories/agent-20260830T030413Z/case_*.jsonl` |
+| Interactive HITL demo | `evaluation/artifacts/human-demo/` — 1 real `HUMAN_DECISION` |
 
-Do not expect a JSONL file per catalog case in `trajectories/` from the default
-eval command.
+Official catalog JSONL lives under `evaluation/results/trajectories/`, not
+the repo-root `trajectories/` folder. Fixtures are tests only.
 
 ---
 
 ## Cited scores (do not invent)
 
-From `evaluation/results/comparison.json` (`comparison-20260829T125254Z`):
-WIS `relative_improvement` **0.0**; `n_cases_failed` 0 both sides;
-`human_intervention_count` 12 on the agent. Full field table:
+From `evaluation/results/comparison.json` (`comparison-20260830T030644Z`):
+WIS baseline **0.9153325914744158**, agent **0.7939144093884205**,
+`relative_improvement` **0.13264925035654543**; `n_cases_failed` 0 both
+sides; holdout outcomes 8 / 2 / 2; `human_intervention_count` 12 on the
+agent means **checkpoints opened** (0 human decisions). Full field table:
 [evaluation.md](evaluation.md).
 
 Frozen first catalog pair (official WIS **null**, 005 failed):

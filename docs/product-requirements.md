@@ -11,7 +11,7 @@ strategy was chosen, what could go wrong, and whether a human should intervene.
 |---|---|
 | Who has the problem? | Analysts who must forecast operations or demand and justify the number. |
 | What bottleneck makes it worth solving? | Choosing a method, checking leakage/intervals, and writing a defensible rationale under time pressure — not “an LLM that emits a number.” |
-| Does the agent solve it well? | **Measured, not assumed.** Official proof is WIS on the shared 12-case list vs the defined baseline. Current pair: `evaluation/results/comparison.json` (`comparison-20260829T125254Z`). `aggregate.metrics.wis.relative_improvement` is **0.0**. The agent did not beat baseline on WIS. |
+| Does the agent solve it well? | **Measured, not assumed.** Official proof is WIS on the shared 12-case list vs the defined baseline. Current pair: `evaluation/results/comparison.json` (`comparison-20260830T030644Z`). `aggregate.metrics.wis.relative_improvement` is **0.13264925035654543** (~13.26%). The advanced path does not win every case (8 / 2 / 2). |
 | Can another person reproduce the result? | **Yes, from artifacts.** Same cases, seeds, pins, and scripts: [reproduction.md](reproduction.md). Re-running mints a new `evaluation_run_id` and overwrites `evaluation/results/` unless you copy the cited files aside. |
 
 **Status of this document vs the repo**
@@ -72,9 +72,13 @@ That bottleneck is worth an agent only if the agent **orchestrates tools and
 checks**, rather than replacing the statistician with a paragraph.
 
 Whether ForecastWize relieves the bottleneck is an **evaluation question**.
-On the cited official pair, holdout WIS matches the baseline (parity) and
-every agent case still waits for a human checkpoint
-(`human_intervention_count` 12). See [changelog.md](changelog.md).
+On the cited official pair (`comparison-20260830T030644Z`, EXP-010),
+official WIS improved **~13.26%** (baseline `0.9153325914744158`,
+advanced `0.7939144093884205`). The advanced path does not win every
+holdout case (8 / 2 / 2); case **012** still loses. Automated evaluation
+opens a checkpoint on every case (`human_intervention_count` 12 =
+**checkpoints opened**, not human decisions; **0** human decisions on
+the catalog run). See [changelog.md](changelog.md).
 
 ---
 
@@ -123,7 +127,9 @@ score holdout with the shared metric module. Named
 `linear_interpolate_train` on the train copy after split. No LLM.
 
 Cited artifact: `evaluation/results/baseline.json`
-(`baseline-20260829T125209Z`). Official scores are in that file, not here.
+(`baseline-20260830T020244Z`). Official scores are in that file, not here.
+The superseded EXP-008 baseline (`baseline-20260829T125209Z`) is archived
+at `evaluation/artifacts/pre-exp010-promotion/`.
 
 HTTP `POST /forecasts` is the same named-model path (`run_baseline_forecast`)
 for an uploaded series, not the catalog harness.
@@ -139,9 +145,13 @@ FAIL retries only if official backtest WIS strictly improves.
 `POST /runs` queues the graph. `POST /runs/{id}/checkpoint` records Accept,
 Reject, or Review.
 
-**Does the agent solve it well?** Official WIS vs baseline is **parity**
-(`relative_improvement` 0.0 in `comparison-20260829T125254Z`). Human
-interventions: 12 vs 0. That is not a WIS win. See [evaluation.md](evaluation.md).
+**Does the agent solve it well?** Official advanced is **EXP-010**
+(`selection_policy=exp010`, `origin_planning=model_specific`, `R=5.0`).
+Official WIS vs baseline improved **~13.26%**
+(`relative_improvement` 0.13264925035654543 in
+`comparison-20260830T030644Z`). Holdout outcomes: 8 / 2 / 2. Case 012 still
+loses. Automated evaluation: 12 checkpoints opened, 0 human decisions.
+See [evaluation.md](evaluation.md).
 
 ---
 
@@ -191,7 +201,8 @@ data is not modified.
 - No implicit auto-approve via navigation, default checkboxes, or silent timeouts.
 - Rejected recommendations are appended to the run trajectory (`agent_id=human`).
 - Human intervention **count** is recorded on the agent evaluation JSON and in
-  `comparison.json` (`human_intervention_count` 12 on the cited official pair).
+  `comparison.json`. On the cited official pair it is 12 **checkpoints
+  opened**, not 12 human decisions (catalog records 0 `HUMAN_DECISION`).
 - Agents may **recommend** review; they must not quietly accept a failed verifier.
 
 ---
@@ -225,8 +236,8 @@ README / reproduction docs must stay synchronized with the repo.
 - No manually entered scores; no hard-coded improvement.
 
 **Current evidence:** `evaluation/results/comparison.json`
-(`comparison-20260829T125254Z`). Official WIS `relative_improvement` **0.0**.
-Do not state that ForecastWize outperforms the baseline on WIS.
+(`comparison-20260830T030644Z`). Official WIS `relative_improvement`
+**0.13264925035654543**. Do not state that ForecastWize wins every case.
 
 ---
 
@@ -234,14 +245,14 @@ Do not state that ForecastWize outperforms the baseline on WIS.
 
 | Deliverable | Status |
 |---|---|
-| Defined baseline | **Implemented** (code + `baseline-20260829T125209Z`) |
-| Advanced agentic solution | Graph + `POST /runs` + run UI **Implemented** |
+| Defined baseline | **Implemented** (code + `baseline-20260830T020244Z`) |
+| Advanced agentic solution | Graph + `POST /runs` + run UI **Implemented** (EXP-010 official) |
 | Identical evaluation cases | **Implemented** (`case_lists_identical` true) |
 | ≥12 cases + ≥1 adversarial | **Implemented** (001–012; 012 adversarial) |
-| Measured improvement (WIS artifacts) | **Measured; no WIS win** (`relative_improvement` 0.0) |
+| Measured improvement (WIS artifacts) | **Measured; 13.26% WIS** (`relative_improvement` 0.1326) |
 | Reproducible evaluation | Baseline + agent + compare **Implemented** |
 | Agent trajectory logging | Orchestrator + child-agent JSONL **Implemented**; fixtures checked in |
-| Improvement changelog | **Implemented** ([changelog.md](changelog.md)); official WIS win **not claimed** |
+| Improvement changelog | **Implemented** ([changelog.md](changelog.md)); official WIS win claimed only from artifacts |
 | Reproduction instructions | **Implemented** |
 | Tests | Skeleton + baseline + REST API + backtest + catalog + harness + agent + orchestrator **Implemented** |
 | Human checkpoints | Graph + HTTP + UI **Implemented** |
@@ -252,30 +263,31 @@ Do not state that ForecastWize outperforms the baseline on WIS.
 
 **Known now (from artifacts and repo behavior)**
 
-- Official WIS vs baseline is parity, not a win (`comparison-20260829T125254Z`).
-- Every agent eval case WARNs and waits for a human (`human_intervention_count` 12).
+- Official WIS vs baseline improved ~13.26% (`comparison-20260830T030644Z`).
+  Case **012** still loses holdout WIS.
+- Every agent eval case WARNs and opens a checkpoint (`human_intervention_count` 12 = checkpoints opened, 0 human decisions).
 - Optional `OPENAI_API_KEY` is unused; no third-party LLM calls.
 - No authentication; API is for a local operator ([security.md](security.md)).
 - `make` is not required; Windows uses `.\make.cmd` / `scripts/check.ps1`.
-- Catalog eval defaults `persist_trajectory=False`.
+- Official catalog eval defaults `persist_trajectory=True` and writes
+  `evaluation/results/trajectories/`. `human_intervention_count` is
+  checkpoints opened, not human decisions.
 
 **Expected residual**
 
 - Interval metrics (WIS) can disagree with point metrics; official claim is WIS.
 - Short history, intermittency, and adversarial series remain in the catalog
-  **so** failure stays visible. On the cited pair those cases completed at
-  WIS parity with baseline.
+  **so** failure stays visible. On the cited pair, 012 still loses holdout WIS.
 - Vendor LLM outage/cost/wording would matter only after an LLM is wired.
 
 Failed experiments and removed approaches are recorded in
-[changelog.md](changelog.md) with artifact links. **Removed experiments: none.**
+[changelog.md](changelog.md) with artifact links. **Removed experiment:
+EXP-009** (failed catalog WIS).
 
-**Biggest improvement (experiments):** case 003 WIS recovery EXP-006 → EXP-007
-(see changelog; `relative_improvement` −5.145… → 0.0). EXP-006 made official
-WIS non-null.
+**Biggest improvement (official pair):** catalog WIS **13.26%** (EXP-010).
 
-**Biggest failure (official pair):** no WIS win vs baseline; 12 human
-interventions vs 0.
+**Biggest failure (official pair):** case 012 still loses holdout WIS; 12
+human interventions vs 0.
 
 **Main engineering lesson:** do not let a hypothesis shortlist or a verifier
 FAIL change which models are scored or swap to a worse backtest WIS; use

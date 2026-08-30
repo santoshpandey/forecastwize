@@ -161,7 +161,9 @@ def test_failed_model_execution_does_not_claim_superior(tmp_path: Path) -> None:
     assert "yhat" not in dump
     if state.status == "completed":
         assert state.report.backtest_executed is True
-        assert any(row.n_folds_failed for row in state.report.comparison)
+        row = state.report.comparison[0]
+        assert row.official_wis is None
+        assert row.n_folds_failed > 0 or row.n_folds_planned == 0
     else:
         assert state.error_type in {"FailedModelExecution", "InsufficientData"}
 
@@ -185,6 +187,7 @@ def test_recommendation_requires_backtest_evidence(tmp_path: Path) -> None:
         run_id="test-ok",
         generated_at=datetime(2021, 2, 1, tzinfo=UTC),
         trajectory_path=traj,
+        selection_policy="default",
     )
     np.testing.assert_array_equal(values, original)
     assert state.status == "completed"
@@ -209,11 +212,58 @@ def test_recommendation_requires_backtest_evidence(tmp_path: Path) -> None:
     win = next(row for row in report.comparison if row.model_id == report.recommended_strategy_id)
     assert win.rank == 1
     assert win.official_wis is not None
+    assert win.n_folds_failed == 0
+    assert win.n_folds_planned > 0
+    eval_payload = next(
+        item.payload for item in state.evidence.values() if item.tool_name == "evaluate_candidates"
+    )
+    assert eval_payload["origin_planning"] == "shared"
+    assert eval_payload["selection_rule"] == "official_backtest_wis"
     assert "promo" not in json.dumps(report.model_dump(mode="json")).lower()
     lines = [json.loads(line) for line in traj.read_text(encoding="utf-8").splitlines() if line]
     assert lines[-1]["final_status"] == "completed"
     assert lines[-1]["agent_id"] == FORECAST_STRATEGIST_AGENT_ID
     assert any(row["tool_requested"] == "evaluate_candidates" for row in lines)
+
+
+def test_strategist_ets_and_arima_receive_official_wis(tmp_path: Path) -> None:
+    n = 60
+    t = np.arange(n, dtype=float)
+    values = 8.0 + 0.05 * t + 2.0 * np.sin(2.0 * np.pi * t / 7.0)
+    state = run_forecast_strategist(
+        daily_index(n),
+        values,
+        horizon=7,
+        frequency="D",
+        diagnostics=_seasonal_diagnostics(n),
+        candidate_model_ids=("naive", "ets", "arima"),
+        seasonal_period=7,
+        seed=4,
+        run_id="test-ets-arima-eligible",
+        generated_at=datetime(2021, 4, 1, tzinfo=UTC),
+        trajectory_path=tmp_path / "elig.jsonl",
+        persist_trajectory=True,
+        origin_planning="model_specific",
+        selection_policy="default",
+    )
+    assert state.status == "completed"
+    assert state.report is not None
+    assert state.report.selection_rule == "official_backtest_wis"
+    by_id = {row.model_id: row for row in state.report.comparison}
+    assert by_id["ets"].min_train_size == 16
+    assert by_id["arima"].min_train_size == 22
+    assert by_id["ets"].n_folds_failed == 0
+    assert by_id["arima"].n_folds_failed == 0
+    assert by_id["ets"].official_wis is not None
+    assert by_id["arima"].official_wis is not None
+    assert by_id["ets"].eligible is True
+    winner = by_id[state.report.recommended_strategy_id or ""]
+    assert winner.rank == 1
+    assert winner.official_wis is not None
+    assert winner.wis_completed_only is not None
+    for row in state.report.comparison:
+        if row.rank == 1:
+            assert row.official_wis == winner.official_wis
 
 
 def test_context_does_not_invent_events(tmp_path: Path) -> None:

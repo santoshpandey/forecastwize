@@ -80,7 +80,8 @@ export function HumanCheckpointPanel({
         </ul>
       ) : null}
       <p className="muted">
-        Evidence: {checkpoint.evidence_ids.join(", ") || "none"}. Status: {checkpoint.status}.
+        Checkpoint: {checkpoint.checkpoint_id ?? "unassigned"}. Evidence:{" "}
+        {checkpoint.evidence_ids.join(", ") || "none"}. Status: {checkpoint.status}.
       </p>
       {transforms.length > 0 ? (
         <div>

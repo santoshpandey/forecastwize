@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.agents.state import (
     HUMAN_AGENT_ID,
+    ORCHESTRATOR_AGENT_ID,
     AgentStatus,
     ProposedTransform,
     TrajectoryStep,
@@ -47,6 +48,7 @@ class HumanCheckpoint(BaseModel):
     proposed_transforms: list[ProposedTransform] = Field(default_factory=list)
     source_data_unmodified: bool = True
     decision_note: str | None = None
+    checkpoint_id: str | None = None
 
 
 class CheckpointDecisionError(ValueError):
@@ -65,6 +67,7 @@ class CheckpointDecision(BaseModel):
     review_required: bool
     checkpoint: HumanCheckpoint
     trajectory_step: TrajectoryStep
+    continuation_step: TrajectoryStep | None = None
 
 
 def collect_checkpoint_triggers(
@@ -113,6 +116,11 @@ def reason_for_triggers(triggers: list[CheckpointTrigger]) -> str:
     return " ".join(TRIGGER_REASONS[item] for item in triggers)
 
 
+def new_checkpoint_id(run_id: str) -> str:
+    """Stable id for the single human gate on a run. Not a secret."""
+    return f"ckpt-{run_id}"
+
+
 def apply_human_checkpoint(
     checkpoint: HumanCheckpoint | None,
     *,
@@ -121,6 +129,7 @@ def apply_human_checkpoint(
     retry_number: int,
     note: str | None = None,
     evidence_ids: list[str] | None = None,
+    case_id: str | None = None,
 ) -> CheckpointDecision:
     """Record Accept / Reject / Review. Never modifies source data."""
     if checkpoint is None or not checkpoint.required:
@@ -138,6 +147,7 @@ def apply_human_checkpoint(
         item.model_copy(update={"applied": False}) for item in checkpoint.proposed_transforms
     ]
     trimmed = None if note is None else note.strip() or None
+    ckpt_id = checkpoint.checkpoint_id or new_checkpoint_id(run_id)
     if action == "review":
         next_checkpoint = checkpoint.model_copy(
             update={
@@ -145,6 +155,7 @@ def apply_human_checkpoint(
                 "decision_note": trimmed,
                 "source_data_unmodified": True,
                 "proposed_transforms": transforms,
+                "checkpoint_id": ckpt_id,
             }
         )
         run_status: RunStatusAfterDecision = "waiting_for_approval"
@@ -158,6 +169,7 @@ def apply_human_checkpoint(
                 "decision_note": trimmed,
                 "source_data_unmodified": True,
                 "proposed_transforms": transforms,
+                "checkpoint_id": ckpt_id,
             }
         )
         run_status = "completed"
@@ -171,6 +183,7 @@ def apply_human_checkpoint(
                 "decision_note": trimmed,
                 "source_data_unmodified": True,
                 "proposed_transforms": transforms,
+                "checkpoint_id": ckpt_id,
             }
         )
         run_status = "completed"
@@ -185,6 +198,7 @@ def apply_human_checkpoint(
         "note": trimmed,
         "triggers": list(next_checkpoint.triggers),
         "checkpoint_status": next_checkpoint.status,
+        "checkpoint_id": ckpt_id,
     }
     step = TrajectoryStep(
         run_id=run_id,
@@ -201,6 +215,15 @@ def apply_human_checkpoint(
         evidence_ids=eids,
         retry_number=retry_number,
         final_status=traj_status,
+        event_type="HUMAN_DECISION",
+        actor=HUMAN_AGENT_ID,
+        case_id=case_id,
+        payload=_human_decision_payload(
+            checkpoint_id=ckpt_id,
+            action=action,
+            checkpoint_status=next_checkpoint.status,
+            note=trimmed,
+        ),
     )
     return CheckpointDecision(
         action=action,
@@ -209,4 +232,78 @@ def apply_human_checkpoint(
         review_required=review_required,
         checkpoint=next_checkpoint,
         trajectory_step=step,
+        continuation_step=_workflow_continuation_step(
+            run_id=run_id,
+            action=action,
+            checkpoint_id=ckpt_id,
+            retry_number=retry_number,
+            case_id=case_id,
+            evidence_ids=eids,
+            accepted=accepted,
+        ),
+    )
+
+
+def _human_decision_payload(
+    *,
+    checkpoint_id: str,
+    action: CheckpointAction,
+    checkpoint_status: CheckpointStatus,
+    note: str | None,
+) -> dict[str, object]:
+    payload: dict[str, object] = {
+        "checkpoint_id": checkpoint_id,
+        "decision": action,
+        "checkpoint_status": checkpoint_status,
+        "source_data_unmodified": True,
+        "actor": HUMAN_AGENT_ID,
+    }
+    if note is not None:
+        payload["note"] = note
+    return payload
+
+
+def _workflow_continuation_step(
+    *,
+    run_id: str,
+    action: CheckpointAction,
+    checkpoint_id: str,
+    retry_number: int,
+    case_id: str | None,
+    evidence_ids: list[str],
+    accepted: bool,
+) -> TrajectoryStep | None:
+    """Accept/Reject complete the run. Review leaves the gate open."""
+    if action == "review":
+        return None
+    return TrajectoryStep(
+        run_id=run_id,
+        agent_id=ORCHESTRATOR_AGENT_ID,
+        timestamp=utc_now(),
+        input_state={
+            "node": "FINALIZE",
+            "prior_event": "HUMAN_DECISION",
+            "note": "workflow continuation after human decision",
+        },
+        tool_requested=None,
+        tool_result=None,
+        decision={
+            "status": "completed",
+            "review_required": False,
+            "continuation_of": "HUMAN_DECISION",
+            "action": action,
+        },
+        evidence_ids=list(evidence_ids),
+        retry_number=retry_number,
+        final_status="completed",
+        event_type="RUN_COMPLETED",
+        actor=ORCHESTRATOR_AGENT_ID,
+        case_id=case_id,
+        payload={
+            "final_status": "completed",
+            "continuation_of": "HUMAN_DECISION",
+            "decision": action,
+            "checkpoint_id": checkpoint_id,
+            "accepted": accepted,
+        },
     )

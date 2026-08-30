@@ -5,6 +5,7 @@ from app.forecasting.backtesting import (
     BacktestComparison,
     BacktestSpec,
     plan_backtest_folds,
+    run_model_specific_origin_backtest,
     run_rolling_origin_backtest,
 )
 from app.forecasting.base import (
@@ -63,6 +64,7 @@ __all__ = [
     "mase",
     "plan_backtest_folds",
     "rmse",
+    "run_model_specific_origin_backtest",
     "run_rolling_origin_backtest",
     "smape",
     "symmetric_intervals",

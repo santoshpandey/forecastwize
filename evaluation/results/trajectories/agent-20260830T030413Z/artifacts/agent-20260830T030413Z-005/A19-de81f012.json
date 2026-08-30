@@ -1,0 +1,1 @@
+{"ok":true,"payload":{"anomalies_detected":false,"detective_evidence_ids":["E1","E2","E3","E4","E5","E6","E7"],"forecastability":"limited","frequency":"D","n_missing_values":0,"n_observations":126,"seasonal_period":null,"seasonality_detected":true,"structural_break_detected":true,"summary":null,"trend_detected":false}}

@@ -1,9 +1,9 @@
 {
-  "comparison_id": "comparison-20260829T125254Z",
-  "timestamp": "2026-08-29T12:52:54.510187Z",
-  "git_commit": "54c0a145b55808e8f68474f0485c80cb430dbcd3",
-  "baseline_evaluation_run_id": "baseline-20260829T125209Z",
-  "agent_evaluation_run_id": "agent-20260829T125231Z",
+  "comparison_id": "comparison-20260830T030644Z",
+  "timestamp": "2026-08-30T03:06:44.419080Z",
+  "git_commit": "524837b0ea8a9378f7d9d6601d080eceff602431",
+  "baseline_evaluation_run_id": "baseline-20260830T020244Z",
+  "agent_evaluation_run_id": "agent-20260830T030413Z",
   "case_list": [
     "001",
     "002",
@@ -36,58 +36,58 @@
           "name": "wis",
           "direction": "lower_is_better",
           "baseline": 0.454942572189656,
-          "agent": 0.454942572189656,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 0.04813636648437247,
+          "delta_agent_minus_baseline": -0.40680620570528353,
+          "relative_improvement": 0.89419243344783
         },
         "smape": {
           "name": "smape",
           "direction": "lower_is_better",
           "baseline": 2.526644009466476,
-          "agent": 2.526644009466476,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 0.2699342002184944,
+          "delta_agent_minus_baseline": -2.256709809247982,
+          "relative_improvement": 0.8931649258038954
         },
         "wmape": {
           "name": "wmape",
           "direction": "lower_is_better",
           "baseline": 2.502197023207575,
-          "agent": 2.502197023207575,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 0.27015159444667264,
+          "delta_agent_minus_baseline": -2.2320454287609026,
+          "relative_improvement": 0.8920342435303659
         },
         "mase": {
           "name": "mase",
           "direction": "lower_is_better",
           "baseline": 1.2578943626680301,
-          "agent": 1.2578943626680301,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 0.13580951642434225,
+          "delta_agent_minus_baseline": -1.1220848462436879,
+          "relative_improvement": 0.8920342435303659
         },
         "interval_coverage": {
           "name": "interval_coverage",
           "direction": "higher_is_better",
           "baseline": 0.5714285714285714,
-          "agent": 0.5714285714285714,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 0.9285714285714286,
+          "delta_agent_minus_baseline": 0.3571428571428572,
+          "relative_improvement": 0.6250000000000001
         },
         "interval_width": {
           "name": "interval_width",
           "direction": "lower_is_better",
           "baseline": 2.0889391292311266,
-          "agent": 2.0889391292311266,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 0.5683608874618703,
+          "delta_agent_minus_baseline": -1.5205782417692562,
+          "relative_improvement": 0.72791888499352
         }
       },
       "runtime_seconds": {
         "name": "runtime_seconds",
         "direction": "lower_is_better",
-        "baseline": 1.7837199000641704,
-        "agent": 1.6151461999397725,
-        "delta_agent_minus_baseline": -0.16857370012439787,
-        "relative_improvement": 0.09450682257810396
+        "baseline": 1.9684443001169711,
+        "agent": 4.365941599942744,
+        "delta_agent_minus_baseline": 2.3974972998257726,
+        "relative_improvement": -1.2179655272355463
       }
     },
     {
@@ -105,33 +105,33 @@
           "name": "wis",
           "direction": "lower_is_better",
           "baseline": 0.13234475763484313,
-          "agent": 0.13234475763484313,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 0.09053487187326001,
+          "delta_agent_minus_baseline": -0.04180988576158312,
+          "relative_improvement": 0.315916448137237
         },
         "smape": {
           "name": "smape",
           "direction": "lower_is_better",
           "baseline": 0.7175431465342378,
-          "agent": 0.7175431465342378,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 0.5134340144678147,
+          "delta_agent_minus_baseline": -0.20410913206642312,
+          "relative_improvement": 0.28445555232779857
         },
         "wmape": {
           "name": "wmape",
           "direction": "lower_is_better",
           "baseline": 0.6942410114444943,
-          "agent": 0.6942410114444943,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 0.4977933656553234,
+          "delta_agent_minus_baseline": -0.19644764578917095,
+          "relative_improvement": 0.28296750343288707
         },
         "mase": {
           "name": "mase",
           "direction": "lower_is_better",
           "baseline": 0.6802967704912889,
-          "agent": 0.6802967704912889,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 0.48779489175191315,
+          "delta_agent_minus_baseline": -0.19250187873937574,
+          "relative_improvement": 0.282967503432887
         },
         "interval_coverage": {
           "name": "interval_coverage",
@@ -145,18 +145,18 @@
           "name": "interval_width",
           "direction": "lower_is_better",
           "baseline": 2.400203600822053,
-          "agent": 2.400203600822053,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 1.4593867740935464,
+          "delta_agent_minus_baseline": -0.9408168267285064,
+          "relative_improvement": 0.3919737585621
         }
       },
       "runtime_seconds": {
         "name": "runtime_seconds",
         "direction": "lower_is_better",
-        "baseline": 1.803334099939093,
-        "agent": 1.5110824001021683,
-        "delta_agent_minus_baseline": -0.29225169983692467,
-        "relative_improvement": 0.16206187186655838
+        "baseline": 2.3467166000045836,
+        "agent": 3.276922299992293,
+        "delta_agent_minus_baseline": 0.9302056999877095,
+        "relative_improvement": -0.3963860399614903
       }
     },
     {
@@ -174,58 +174,58 @@
           "name": "wis",
           "direction": "lower_is_better",
           "baseline": 0.4355449313493981,
-          "agent": 0.4355449313493981,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 0.12509165740310216,
+          "delta_agent_minus_baseline": -0.31045327394629596,
+          "relative_improvement": 0.7127927605183115
         },
         "smape": {
           "name": "smape",
           "direction": "lower_is_better",
           "baseline": 3.03191781731738,
-          "agent": 3.03191781731738,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 0.9153615221665795,
+          "delta_agent_minus_baseline": -2.1165562951508003,
+          "relative_improvement": 0.6980915785585227
         },
         "wmape": {
           "name": "wmape",
           "direction": "lower_is_better",
           "baseline": 2.965798785320981,
-          "agent": 2.965798785320981,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 0.9007774701034589,
+          "delta_agent_minus_baseline": -2.065021315217522,
+          "relative_improvement": 0.6962782928626865
         },
         "mase": {
           "name": "mase",
           "direction": "lower_is_better",
           "baseline": 1.564147040702137,
-          "agent": 1.564147040702137,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 0.47506540941583,
+          "delta_agent_minus_baseline": -1.089081631286307,
+          "relative_improvement": 0.6962782928626865
         },
         "interval_coverage": {
           "name": "interval_coverage",
           "direction": "higher_is_better",
           "baseline": 0.5714285714285714,
-          "agent": 0.5714285714285714,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 0.8571428571428571,
+          "delta_agent_minus_baseline": 0.2857142857142857,
+          "relative_improvement": 0.5
         },
         "interval_width": {
           "name": "interval_width",
           "direction": "lower_is_better",
           "baseline": 2.1735987997068538,
-          "agent": 2.1735987997068538,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 1.3587528459565958,
+          "delta_agent_minus_baseline": -0.8148459537502579,
+          "relative_improvement": 0.3748833289106313
         }
       },
       "runtime_seconds": {
         "name": "runtime_seconds",
         "direction": "lower_is_better",
-        "baseline": 1.8897645000834018,
-        "agent": 1.987948799971491,
-        "delta_agent_minus_baseline": 0.0981842998880893,
-        "relative_improvement": -0.051955838880324026
+        "baseline": 2.0007159002125263,
+        "agent": 4.7479421000462025,
+        "delta_agent_minus_baseline": 2.747226199833676,
+        "relative_improvement": -1.373121590897464
       }
     },
     {
@@ -243,58 +243,58 @@
           "name": "wis",
           "direction": "lower_is_better",
           "baseline": 4.0462630166966305,
-          "agent": 4.0462630166966305,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 2.455469571202966,
+          "delta_agent_minus_baseline": -1.5907934454936643,
+          "relative_improvement": 0.3931512704264065
         },
         "smape": {
           "name": "smape",
           "direction": "lower_is_better",
           "baseline": 13.247116427925956,
-          "agent": 13.247116427925956,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 10.240225220494672,
+          "delta_agent_minus_baseline": -3.006891207431284,
+          "relative_improvement": 0.22698458368588975
         },
         "wmape": {
           "name": "wmape",
           "direction": "lower_is_better",
           "baseline": 12.822778058290307,
-          "agent": 12.822778058290307,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 9.94103970491975,
+          "delta_agent_minus_baseline": -2.881738353370558,
+          "relative_improvement": 0.2247358833063034
         },
         "mase": {
           "name": "mase",
           "direction": "lower_is_better",
           "baseline": 1.0106462812934796,
-          "agent": 1.0106462812934796,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 0.7835177965567586,
+          "delta_agent_minus_baseline": -0.22712848473672098,
+          "relative_improvement": 0.22473588330630348
         },
         "interval_coverage": {
           "name": "interval_coverage",
           "direction": "higher_is_better",
           "baseline": 1.0,
-          "agent": 1.0,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 0.8571428571428571,
+          "delta_agent_minus_baseline": -0.1428571428571429,
+          "relative_improvement": -0.1428571428571429
         },
         "interval_width": {
           "name": "interval_width",
           "direction": "lower_is_better",
           "baseline": 93.12599759127126,
-          "agent": 93.12599759127126,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 25.807382708507255,
+          "delta_agent_minus_baseline": -67.318614882764,
+          "relative_improvement": 0.7228767113800433
         }
       },
       "runtime_seconds": {
         "name": "runtime_seconds",
         "direction": "lower_is_better",
-        "baseline": 1.0437352999579161,
-        "agent": 1.523677899967879,
-        "delta_agent_minus_baseline": 0.4799426000099629,
-        "relative_improvement": -0.459831721729939
+        "baseline": 1.1783605001401156,
+        "agent": 5.400832399958745,
+        "delta_agent_minus_baseline": 4.222471899818629,
+        "relative_improvement": -3.5833447398453586
       }
     },
     {
@@ -312,33 +312,33 @@
           "name": "wis",
           "direction": "lower_is_better",
           "baseline": 0.378887592873644,
-          "agent": 0.378887592873644,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 0.16360163677315423,
+          "delta_agent_minus_baseline": -0.21528595610048976,
+          "relative_improvement": 0.5682053467828542
         },
         "smape": {
           "name": "smape",
           "direction": "lower_is_better",
           "baseline": 2.517603546283902,
-          "agent": 2.517603546283902,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 1.0299839771193813,
+          "delta_agent_minus_baseline": -1.4876195691645206,
+          "relative_improvement": 0.5908871439906872
         },
         "wmape": {
           "name": "wmape",
           "direction": "lower_is_better",
           "baseline": 2.5552705807193363,
-          "agent": 2.5552705807193363,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 1.057514428555661,
+          "delta_agent_minus_baseline": -1.4977561521636753,
+          "relative_improvement": 0.5861438563355748
         },
         "mase": {
           "name": "mase",
           "direction": "lower_is_better",
           "baseline": 1.2706304398518002,
-          "agent": 1.2706304398518002,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 0.5258582138596984,
+          "delta_agent_minus_baseline": -0.7447722259921018,
+          "relative_improvement": 0.5861438563355748
         },
         "interval_coverage": {
           "name": "interval_coverage",
@@ -352,18 +352,18 @@
           "name": "interval_width",
           "direction": "lower_is_better",
           "baseline": 3.9728599357514844,
-          "agent": 3.9728599357514844,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 2.3546020207354377,
+          "delta_agent_minus_baseline": -1.6182579150160468,
+          "relative_improvement": 0.4073282071823018
         }
       },
       "runtime_seconds": {
         "name": "runtime_seconds",
         "direction": "lower_is_better",
-        "baseline": 1.2607203000225127,
-        "agent": 1.310948200058192,
-        "delta_agent_minus_baseline": 0.05022790003567934,
-        "relative_improvement": -0.03984063716177365
+        "baseline": 1.3799040999729186,
+        "agent": 4.589715900132433,
+        "delta_agent_minus_baseline": 3.209811800159514,
+        "relative_improvement": -2.3261122278153303
       }
     },
     {
@@ -429,10 +429,10 @@
       "runtime_seconds": {
         "name": "runtime_seconds",
         "direction": "lower_is_better",
-        "baseline": 0.9901674001011997,
-        "agent": 1.1191859999671578,
-        "delta_agent_minus_baseline": 0.1290185998659581,
-        "relative_improvement": -0.13029978552391422
+        "baseline": 1.256257199915126,
+        "agent": 2.3117329999804497,
+        "delta_agent_minus_baseline": 1.0554758000653237,
+        "relative_improvement": -0.8401749260713751
       }
     },
     {
@@ -450,33 +450,33 @@
           "name": "wis",
           "direction": "lower_is_better",
           "baseline": 0.3088483265521366,
-          "agent": 0.3088483265521366,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 0.37619603503792565,
+          "delta_agent_minus_baseline": 0.06734770848578903,
+          "relative_improvement": -0.21806078484423996
         },
         "smape": {
           "name": "smape",
           "direction": "lower_is_better",
           "baseline": 0.7681591150668984,
-          "agent": 0.7681591150668984,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 1.1195649138112467,
+          "delta_agent_minus_baseline": 0.3514057987443483,
+          "relative_improvement": -0.4574648557203473
         },
         "wmape": {
           "name": "wmape",
           "direction": "lower_is_better",
           "baseline": 0.7683096906962511,
-          "agent": 0.7683096906962511,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 1.1159947612412333,
+          "delta_agent_minus_baseline": 0.3476850705449822,
+          "relative_improvement": -0.45253245501811384
         },
         "mase": {
           "name": "mase",
           "direction": "lower_is_better",
           "baseline": 0.23611995182205767,
-          "agent": 0.23611995182205767,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 0.34297189329885214,
+          "delta_agent_minus_baseline": 0.10685194147679447,
+          "relative_improvement": -0.4525324550181136
         },
         "interval_coverage": {
           "name": "interval_coverage",
@@ -490,18 +490,18 @@
           "name": "interval_width",
           "direction": "lower_is_better",
           "baseline": 12.851269684485446,
-          "agent": 12.851269684485446,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 14.321915327480395,
+          "delta_agent_minus_baseline": 1.470645642994949,
+          "relative_improvement": -0.11443582456061674
         }
       },
       "runtime_seconds": {
         "name": "runtime_seconds",
         "direction": "lower_is_better",
-        "baseline": 1.1095229999627918,
-        "agent": 1.2202965999022126,
-        "delta_agent_minus_baseline": 0.11077359993942082,
-        "relative_improvement": -0.09983893974540019
+        "baseline": 1.3115691000130028,
+        "agent": 3.8059768001548946,
+        "delta_agent_minus_baseline": 2.494407700141892,
+        "relative_improvement": -1.9018500055522523
       }
     },
     {
@@ -519,33 +519,33 @@
           "name": "wis",
           "direction": "lower_is_better",
           "baseline": 0.3389034976367961,
-          "agent": 0.3389034976367961,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 0.27447528057327975,
+          "delta_agent_minus_baseline": -0.06442821706351637,
+          "relative_improvement": 0.19010785522362558
         },
         "smape": {
           "name": "smape",
           "direction": "lower_is_better",
           "baseline": 1.3273847444211475,
-          "agent": 1.3273847444211475,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 1.0064447054068493,
+          "delta_agent_minus_baseline": -0.32094003901429824,
+          "relative_improvement": 0.24178373328695693
         },
         "wmape": {
           "name": "wmape",
           "direction": "lower_is_better",
           "baseline": 1.2816719437686466,
-          "agent": 1.2816719437686466,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 0.9926735342499631,
+          "delta_agent_minus_baseline": -0.2889984095186835,
+          "relative_improvement": 0.22548547693796622
         },
         "mase": {
           "name": "mase",
           "direction": "lower_is_better",
           "baseline": 0.2417321694916486,
-          "agent": 0.2417321694916486,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 0.18722507596257495,
+          "delta_agent_minus_baseline": -0.05450709352907365,
+          "relative_improvement": 0.22548547693796614
         },
         "interval_coverage": {
           "name": "interval_coverage",
@@ -559,18 +559,18 @@
           "name": "interval_width",
           "direction": "lower_is_better",
           "baseline": 13.957055293957996,
-          "agent": 13.957055293957996,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 11.529318008573998,
+          "delta_agent_minus_baseline": -2.427737285383998,
+          "relative_improvement": 0.17394337374553243
         }
       },
       "runtime_seconds": {
         "name": "runtime_seconds",
         "direction": "lower_is_better",
-        "baseline": 1.517297700047493,
-        "agent": 1.6367221002001315,
-        "delta_agent_minus_baseline": 0.11942440015263855,
-        "relative_improvement": -0.07870861476221867
+        "baseline": 1.7127398999873549,
+        "agent": 3.916452300036326,
+        "delta_agent_minus_baseline": 2.203712400048971,
+        "relative_improvement": -1.2866591127264806
       }
     },
     {
@@ -588,58 +588,58 @@
           "name": "wis",
           "direction": "lower_is_better",
           "baseline": 0.41854612332668967,
-          "agent": 0.41854612332668967,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 0.3779421029944304,
+          "delta_agent_minus_baseline": -0.040604020332259294,
+          "relative_improvement": 0.09701205690194975
         },
         "smape": {
           "name": "smape",
           "direction": "lower_is_better",
           "baseline": 57.14285714285714,
-          "agent": 57.14285714285714,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 184.47152255891925,
+          "delta_agent_minus_baseline": 127.32866541606211,
+          "relative_improvement": -2.228251644781087
         },
         "wmape": {
           "name": "wmape",
           "direction": "lower_is_better",
           "baseline": 133.33333333333334,
-          "agent": 133.33333333333334,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 162.61819784332016,
+          "delta_agent_minus_baseline": 29.284864509986818,
+          "relative_improvement": -0.2196364838249011
         },
         "mase": {
           "name": "mase",
           "direction": "lower_is_better",
           "baseline": 0.3938531587933978,
-          "agent": 0.3938531587933978,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 0.48035768173411014,
+          "delta_agent_minus_baseline": 0.08650452294071237,
+          "relative_improvement": -0.21963648382490125
         },
         "interval_coverage": {
           "name": "interval_coverage",
           "direction": "higher_is_better",
           "baseline": 1.0,
-          "agent": 1.0,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 0.9285714285714286,
+          "delta_agent_minus_baseline": -0.0714285714285714,
+          "relative_improvement": -0.0714285714285714
         },
         "interval_width": {
           "name": "interval_width",
           "direction": "lower_is_better",
           "baseline": 13.68419597102994,
-          "agent": 13.68419597102994,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 8.622985680428881,
+          "delta_agent_minus_baseline": -5.061210290601059,
+          "relative_improvement": 0.36985806848395547
         }
       },
       "runtime_seconds": {
         "name": "runtime_seconds",
         "direction": "lower_is_better",
-        "baseline": 1.1678248001262546,
-        "agent": 1.2732924001757056,
-        "delta_agent_minus_baseline": 0.105467600049451,
-        "relative_improvement": -0.09031114944471876
+        "baseline": 1.5775743001140654,
+        "agent": 2.8710719000082463,
+        "delta_agent_minus_baseline": 1.293497599894181,
+        "relative_improvement": -0.8199281642713471
       }
     },
     {
@@ -705,10 +705,10 @@
       "runtime_seconds": {
         "name": "runtime_seconds",
         "direction": "lower_is_better",
-        "baseline": 0.02761089988052845,
-        "agent": 0.09053879999555647,
-        "delta_agent_minus_baseline": 0.06292790011502802,
-        "relative_improvement": -2.2790963129530435
+        "baseline": 0.034465499920770526,
+        "agent": 1.116696499986574,
+        "delta_agent_minus_baseline": 1.0822310000658035,
+        "relative_improvement": -31.400414981753983
       }
     },
     {
@@ -726,58 +726,58 @@
           "name": "wis",
           "direction": "lower_is_better",
           "baseline": 0.8262155383322131,
-          "agent": 0.8262155383322131,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 0.23575021211968247,
+          "delta_agent_minus_baseline": -0.5904653262125306,
+          "relative_improvement": 0.714662577521158
         },
         "smape": {
           "name": "smape",
           "direction": "lower_is_better",
           "baseline": 8.010846051512498,
-          "agent": 8.010846051512498,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 2.138094072341156,
+          "delta_agent_minus_baseline": -5.872751979171342,
+          "relative_improvement": 0.7331000922259053
         },
         "wmape": {
           "name": "wmape",
           "direction": "lower_is_better",
           "baseline": 7.7508030301265025,
-          "agent": 7.7508030301265025,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 2.100075266418037,
+          "delta_agent_minus_baseline": -5.650727763708465,
+          "relative_improvement": 0.7290506211736667
         },
         "mase": {
           "name": "mase",
           "direction": "lower_is_better",
           "baseline": 2.8442747912613546,
-          "agent": 2.8442747912613546,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 0.7706544879036628,
+          "delta_agent_minus_baseline": -2.073620303357692,
+          "relative_improvement": 0.7290506211736667
         },
         "interval_coverage": {
           "name": "interval_coverage",
           "direction": "higher_is_better",
           "baseline": 1.0,
-          "agent": 1.0,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 0.9333333333333333,
+          "delta_agent_minus_baseline": -0.06666666666666665,
+          "relative_improvement": -0.06666666666666665
         },
         "interval_width": {
           "name": "interval_width",
           "direction": "lower_is_better",
           "baseline": 8.501566262211393,
-          "agent": 8.501566262211393,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 2.4942837855333804,
+          "delta_agent_minus_baseline": -6.007282476678013,
+          "relative_improvement": 0.7066089108050336
         }
       },
       "runtime_seconds": {
         "name": "runtime_seconds",
         "direction": "lower_is_better",
-        "baseline": 2.2807140999939293,
-        "agent": 3.197084400104359,
-        "delta_agent_minus_baseline": 0.9163703001104295,
-        "relative_improvement": -0.40179095666259473
+        "baseline": 2.7732569000218064,
+        "agent": 4.667208099970594,
+        "delta_agent_minus_baseline": 1.8939511999487877,
+        "relative_improvement": -0.6829339178544531
       }
     },
     {
@@ -795,33 +795,33 @@
           "name": "wis",
           "direction": "lower_is_better",
           "baseline": 1.378053705549347,
-          "agent": 1.378053705549347,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 3.114334142647237,
+          "delta_agent_minus_baseline": 1.7362804370978902,
+          "relative_improvement": -1.259951212428067
         },
         "smape": {
           "name": "smape",
           "direction": "lower_is_better",
           "baseline": 5.007571943894525,
-          "agent": 5.007571943894525,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 9.95089127643835,
+          "delta_agent_minus_baseline": 4.943319332543825,
+          "relative_improvement": -0.9871689089901066
         },
         "wmape": {
           "name": "wmape",
           "direction": "lower_is_better",
           "baseline": 4.963433344502448,
-          "agent": 4.963433344502448,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 9.9346763909137,
+          "delta_agent_minus_baseline": 4.971243046411251,
+          "relative_improvement": -1.0015734475244749
         },
         "mase": {
           "name": "mase",
           "direction": "lower_is_better",
           "baseline": 1.8138045842945134,
-          "agent": 1.8138045842945134,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 3.630463094922065,
+          "delta_agent_minus_baseline": 1.8166585106275517,
+          "relative_improvement": -1.0015734475244742
         },
         "interval_coverage": {
           "name": "interval_coverage",
@@ -835,18 +835,18 @@
           "name": "interval_width",
           "direction": "lower_is_better",
           "baseline": 23.546748560374674,
-          "agent": 23.546748560374674,
-          "delta_agent_minus_baseline": 0.0,
-          "relative_improvement": 0.0
+          "agent": 68.4940528753983,
+          "delta_agent_minus_baseline": 44.94730431502362,
+          "relative_improvement": -1.9088539634156787
         }
       },
       "runtime_seconds": {
         "name": "runtime_seconds",
         "direction": "lower_is_better",
-        "baseline": 1.8544441000558436,
-        "agent": 2.521335900062695,
-        "delta_agent_minus_baseline": 0.6668918000068516,
-        "relative_improvement": -0.35961817343902097
+        "baseline": 2.2756022999528795,
+        "agent": 4.258576999884099,
+        "delta_agent_minus_baseline": 1.9829746999312192,
+        "relative_improvement": -0.8714065282726601
       }
     }
   ],
@@ -857,49 +857,49 @@
         "name": "wis",
         "direction": "lower_is_better",
         "baseline": 0.9153325914744158,
-        "agent": 0.9153325914744158,
-        "delta_agent_minus_baseline": 0.0,
-        "relative_improvement": 0.0
+        "agent": 0.7939144093884205,
+        "delta_agent_minus_baseline": -0.12141818208599531,
+        "relative_improvement": 0.13264925035654543
       },
       "smape": {
         "name": "smape",
         "direction": "lower_is_better",
         "baseline": 9.024720876543379,
-        "agent": 9.024720876543379,
-        "delta_agent_minus_baseline": 0.0,
-        "relative_improvement": 0.0
+        "agent": 18.80453858621868,
+        "delta_agent_minus_baseline": 9.779817709675301,
+        "relative_improvement": -1.0836698268524332
       },
       "wmape": {
         "name": "wmape",
         "direction": "lower_is_better",
         "baseline": 15.198982230571344,
-        "agent": 15.198982230571344,
-        "delta_agent_minus_baseline": 0.0,
-        "relative_improvement": 0.0
+        "agent": 16.84823702710585,
+        "delta_agent_minus_baseline": 1.649254796534505,
+        "relative_improvement": -0.10851087076193706
       },
       "mase": {
         "name": "mase",
         "direction": "lower_is_better",
         "baseline": 1.0593499885527597,
-        "agent": 1.0593499885527597,
-        "delta_agent_minus_baseline": 0.0,
-        "relative_improvement": 0.0
+        "agent": 0.7682098644827681,
+        "delta_agent_minus_baseline": -0.2911401240699917,
+        "relative_improvement": 0.27482902460567854
       },
       "interval_coverage": {
         "name": "interval_coverage",
         "direction": "higher_is_better",
         "baseline": 0.8988095238095237,
-        "agent": 0.8988095238095237,
-        "delta_agent_minus_baseline": 0.0,
-        "relative_improvement": 0.0
+        "agent": 0.9289682539682539,
+        "delta_agent_minus_baseline": 0.030158730158730163,
+        "relative_improvement": 0.03355408388520972
       },
       "interval_width": {
         "name": "interval_width",
         "direction": "lower_is_better",
         "baseline": 21.285367673995488,
-        "agent": 21.285367673995488,
-        "delta_agent_minus_baseline": 0.0,
-        "relative_improvement": 0.0
+        "agent": 18.011084847772775,
+        "delta_agent_minus_baseline": -3.274282826222713,
+        "relative_improvement": 0.15382787257290048
       }
     },
     "n_cases_failed": {
@@ -921,18 +921,18 @@
     "wall_seconds": {
       "name": "wall_seconds",
       "direction": "lower_is_better",
-      "baseline": 16.849137800047174,
-      "agent": 19.58624630002305,
-      "delta_agent_minus_baseline": 2.737108499975875,
-      "relative_improvement": -0.162447985912265
+      "baseline": 20.08160710008815,
+      "agent": 45.536693200003356,
+      "delta_agent_minus_baseline": 25.455086099915206,
+      "relative_improvement": -1.2675821199491284
     },
     "cases_seconds": {
       "name": "cases_seconds",
       "direction": "lower_is_better",
-      "baseline": 16.728856100235134,
-      "agent": 19.00725970044732,
-      "delta_agent_minus_baseline": 2.2784036002121866,
-      "relative_improvement": -0.13619601881686114
+      "baseline": 19.81560660037212,
+      "agent": 45.3290699000936,
+      "delta_agent_minus_baseline": 25.51346329972148,
+      "relative_improvement": -1.2875438947825275
     }
   },
   "errors": {

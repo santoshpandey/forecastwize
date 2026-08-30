@@ -26,7 +26,7 @@ from app.agents.state import (
     new_run_id,
 )
 from app.agents.verifier import VerifierReport
-from app.evidence.logger import persist_trajectory_step
+from app.evidence.logger import persist_trajectory_step, resolve_trajectory_path
 from app.forecasting.base import ForecastResult
 from app.time_utils import utc_now
 from app.tools.verification_tools import ForecastSnapshot, snapshot_from_forecast_result
@@ -200,6 +200,7 @@ class ForecastAnalystState(BaseModel):
     trajectory: list[TrajectoryStep] = Field(default_factory=list)
     error_type: str | None = None
     error_message: str | None = None
+    case_id: str | None = None
 
     def append_step(self, step: TrajectoryStep) -> None:
         self.trajectory.append(step)
@@ -217,6 +218,8 @@ def run_forecast_analyst(
     generated_at: datetime | None = None,
     trajectory_path: Path | None = None,
     persist_trajectory: bool = True,
+    case_id: str | None = None,
+    append_to_trajectory: bool = False,
 ) -> ForecastAnalystState:
     """Compile a twelve-section report from supplied artifacts.
 
@@ -224,16 +227,29 @@ def run_forecast_analyst(
     """
     created = generated_at if generated_at is not None else utc_now()
     rid = run_id if run_id is not None else new_run_id(created, prefix="forecast-analyst")
-    state = ForecastAnalystState(run_id=rid, status="running", retry_number=0)
-    out_path = trajectory_path
-    if persist_trajectory and out_path is None:
-        out_path = _TRAJECTORIES_DIR / f"{rid}.jsonl"
-    if out_path is not None:
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        out_path.write_text("", encoding="utf-8", newline="\n")
+    state = ForecastAnalystState(run_id=rid, status="running", retry_number=0, case_id=case_id)
+    out_path = resolve_trajectory_path(
+        persist=persist_trajectory,
+        path=trajectory_path,
+        run_id=rid,
+        default_dir=_TRAJECTORIES_DIR,
+        truncate=not append_to_trajectory,
+    )
 
     snapshot = _input_snapshot(forecast, verifier_report, context_report)
     next_id = _evidence_id_factory()
+    _record_step(
+        state,
+        created=created,
+        snapshot=snapshot,
+        tool_requested=None,
+        tool_result=None,
+        evidence_ids=[],
+        path=out_path,
+        status="running",
+        event_type="AGENT_STARTED",
+        payload={"agent": FORECAST_ANALYST_AGENT_ID},
+    )
 
     if forecast is None or (
         not isinstance(forecast, ForecastResult) and not getattr(forecast, "yhat", None)
@@ -1150,7 +1166,18 @@ def _record_step(
     status: str,
     decision: JsonObject | None = None,
     retry_number: int = 0,
+    event_type: str | None = None,
+    payload: JsonObject | None = None,
 ) -> None:
+    inferred = event_type
+    if inferred is None:
+        if tool_requested is not None:
+            failed = isinstance(tool_result, dict) and tool_result.get("ok") is False
+            inferred = "TOOL_FAILED" if failed else "TOOL_COMPLETED"
+        elif status == "completed":
+            inferred = "AGENT_COMPLETED"
+        else:
+            inferred = "AGENT_DECISION"
     step = TrajectoryStep(
         run_id=state.run_id,
         agent_id=FORECAST_ANALYST_AGENT_ID,
@@ -1162,6 +1189,11 @@ def _record_step(
         evidence_ids=evidence_ids,
         retry_number=retry_number,
         final_status=status,  # type: ignore[arg-type]
+        case_id=state.case_id,
+        event_type=inferred,
+        actor=FORECAST_ANALYST_AGENT_ID,
+        payload=payload,
+        safe_tool_arguments=None if tool_requested is None else {"tool_name": tool_requested},
     )
     state.retry_number = max(state.retry_number, retry_number)
     state.append_step(step)

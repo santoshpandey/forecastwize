@@ -43,6 +43,14 @@ evaluation/artifacts/**
 !evaluation/artifacts/EXP-007-retry-backtest-wis/**
 !evaluation/artifacts/EXP-008-full-candidates/
 !evaluation/artifacts/EXP-008-full-candidates/**
+!evaluation/artifacts/EXP-009-ets-arima-min-train/
+!evaluation/artifacts/EXP-009-ets-arima-min-train/**
+!evaluation/artifacts/EXP-010-robust-model-selection/
+!evaluation/artifacts/EXP-010-robust-model-selection/**
+!evaluation/artifacts/pre-exp010-promotion/
+!evaluation/artifacts/pre-exp010-promotion/**
+!evaluation/artifacts/human-demo/
+!evaluation/artifacts/human-demo/**
 !evaluation/.gitkeep
 !evaluation/README.md
 experiments/**

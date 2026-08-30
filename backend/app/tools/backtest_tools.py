@@ -10,9 +10,12 @@ import pandas as pd
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.forecasting.backtesting import (
+    DEFAULT_TARGET_BACKTEST_FOLDS,
     BacktestComparison,
     BacktestSpec,
+    OriginPlanning,
     WindowType,
+    run_model_specific_origin_backtest,
     run_rolling_origin_backtest,
 )
 from app.forecasting.base import ForecastInterfaceError, ForecastModel
@@ -37,6 +40,8 @@ class BacktestToolSpec(BaseModel):
     seed: int | None = None
     seasonal_period: int | None = None
     seasonality_period: int = 1
+    origin_planning: OriginPlanning = "shared"
+    target_folds: int = DEFAULT_TARGET_BACKTEST_FOLDS
 
 
 def run_backtest_tool(
@@ -46,11 +51,13 @@ def run_backtest_tool(
     *,
     generated_at: datetime | None = None,
 ) -> BacktestComparison:
-    """Run rolling-origin backtesting via the shared forecasting engine.
+    """Run rolling-origin backtesting via the forecasting engine.
 
-    Baseline callers and an agent graph must use this same numerical path
-    (``run_rolling_origin_backtest``). This wrapper only constructs named
-    baseline models. It does not call an LLM and does not emit yhat itself.
+    Shared planning (``origin_planning='shared'``) is the default path for
+    both baseline and the official advanced workflow:
+    ``run_rolling_origin_backtest``. Model-specific first origins
+    (``origin_planning='model_specific'``) are the EXP-009 opt-in only.
+    This wrapper constructs named models. It does not call an LLM.
     """
     factories = _named_model_factories(spec.model_ids, spec.seasonal_period)
     engine_spec = BacktestSpec(
@@ -64,6 +71,15 @@ def run_backtest_tool(
         seed=spec.seed,
         seasonality_period=spec.seasonality_period,
     )
+    if spec.origin_planning == "model_specific":
+        return run_model_specific_origin_backtest(
+            timestamps,
+            values,
+            factories,
+            engine_spec,
+            target_folds=spec.target_folds,
+            generated_at=generated_at,
+        )
     return run_rolling_origin_backtest(
         timestamps,
         values,

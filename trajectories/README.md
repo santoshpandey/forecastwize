@@ -1,8 +1,10 @@
 # Agent trajectories
 
-Append-only **JSONL** (one JSON object per line) for every agent run. Child agents
-are usually called with `persist_trajectory=False`; `run_orchestrator` owns the
-run file. Pytest writes under a temp path unless a test points here.
+Append-only **JSONL** (one JSON object per line) for every agent run.
+`run_orchestrator` owns the run file. Official catalog evaluation appends
+child-agent events to the same case file under
+`evaluation/results/trajectories/`. Pytest writes under a temp path unless a
+test points here. See [docs/trajectory-evidence.md](../docs/trajectory-evidence.md).
 
 ## Layout
 

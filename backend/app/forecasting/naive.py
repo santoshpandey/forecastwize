@@ -62,6 +62,10 @@ class NaiveModel(ForecastModel):
         yhat = self.predict(horizon=horizon)
         return random_walk_intervals(yhat, self._sigma, coverage)
 
+    def minimum_train_size(self, *, frequency: str) -> int:
+        """``copy_training`` rejects an empty series; one observation is enough to fit."""
+        return super().minimum_train_size(frequency=frequency)
+
     def metadata(self) -> ModelMetadata:
         require_fitted(self._fitted, "NaiveModel")
         assert self._index is not None

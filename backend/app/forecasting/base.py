@@ -152,6 +152,19 @@ class ForecastModel(ABC):
     def metadata(self) -> ModelMetadata:
         """Model identity, training range, frequency, config, and seed after fit."""
 
+    def minimum_train_size(self, *, frequency: str) -> int:
+        """Smallest training length for which ``fit`` is allowed.
+
+        Concrete models override this with the same rules ``fit`` enforces.
+        Default is 1 (non-empty series). Does not inspect holdout or emit yhat.
+        ``frequency`` is part of the contract because seasonal models resolve
+        period from frequency when the constructor did not fix it.
+        """
+        if not frequency or not str(frequency).strip():
+            msg = "frequency must be a non-empty explicit alias"
+            raise ForecastInterfaceError(msg)
+        return 1
+
 
 def assemble_forecast_result(
     *,

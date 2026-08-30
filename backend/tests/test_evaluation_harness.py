@@ -194,7 +194,12 @@ def test_baseline_and_agent_use_identical_case_sets(tmp_path: Path) -> None:
         output_md=tmp_path / "agent.md",
         candidate_model_ids=("naive",),
         generated_at=generated_at,
+        persist_trajectory=True,
     )
+    traj_dir = tmp_path / "trajectories" / agent.evaluation_run_id
+    assert [path.name for path in sorted(traj_dir.glob("case_*.jsonl"))] == [
+        f"case_{cid}.jsonl" for cid in expected
+    ]
     assert baseline.case_list == expected
     assert agent.case_list == expected
     assert baseline.case_list == agent.case_list
@@ -223,3 +228,17 @@ def test_runtime_library_pins_record_python_and_requirement_file() -> None:
     assert pins["statsmodels"]
     assert pins["pins_file"] == "backend/requirements.txt"
     assert pins["catalog_registry"] == "evaluation/cases/case_registry.yaml"
+
+
+def test_baseline_harness_keeps_shared_origin_backtest() -> None:
+    import evaluation.run_agent as agent_mod
+    import evaluation.run_baseline as baseline_mod
+
+    baseline_src = inspect.getsource(baseline_mod)
+    agent_src = inspect.getsource(agent_mod)
+    assert "run_rolling_origin_backtest" in baseline_src
+    assert "run_model_specific_origin_backtest" not in baseline_src
+    assert "DEFAULT_ORIGIN_PLANNING" in agent_src
+    assert "model_specific" in agent_src
+    assert "DEFAULT_SELECTION_POLICY" in agent_src
+    assert "analyze_backtest_robustness" not in baseline_src

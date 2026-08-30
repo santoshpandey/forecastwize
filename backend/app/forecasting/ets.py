@@ -20,6 +20,21 @@ from app.forecasting._support import (
 from app.forecasting.base import ForecastInterfaceError, ForecastModel, ModelMetadata
 
 
+def ets_minimum_train_size(*, frequency: str, seasonal_period: int | None) -> int:
+    """Same length rule as ``ETSModel.fit``.
+
+    Seasonal ETS uses additive Holt–Winters with heuristic initialization.
+    statsmodels requires ``10 + 2 * (m // 2)`` points for that initializer, which
+    can exceed ``2 * m``. The returned value is the larger of those constraints.
+    """
+    period = seasonal_period if seasonal_period is not None else period_from_frequency(frequency)
+    if period is not None and period >= 2:
+        m = int(period)
+        heuristic_n = 10 + 2 * (m // 2)
+        return max(2 * m, heuristic_n)
+    return 3
+
+
 class ETSModel(ForecastModel):
     """Additive trend; additive seasonality only when a period >= 2 is known.
 
@@ -53,16 +68,17 @@ class ETSModel(ForecastModel):
             period = self._period_arg
         else:
             period = period_from_frequency(frequency)
+        needed = ets_minimum_train_size(frequency=frequency, seasonal_period=self._period_arg)
         seasonal = None
         seasonal_periods = None
         if period is not None and period >= 2:
-            if y.size < 2 * period:
-                msg = f"ETS seasonal needs at least {2 * period} observations; got {y.size}."
+            if y.size < needed:
+                msg = f"ETS seasonal needs at least {needed} observations; got {y.size}."
                 raise ForecastInterfaceError(msg)
             seasonal = "add"
             seasonal_periods = int(period)
-        elif y.size < 3:
-            msg = f"ETS needs at least 3 observations; got {y.size}."
+        elif y.size < needed:
+            msg = f"ETS needs at least {needed} observations; got {y.size}."
             raise ForecastInterfaceError(msg)
 
         try:
@@ -107,6 +123,9 @@ class ETSModel(ForecastModel):
     ) -> tuple[np.ndarray, np.ndarray]:
         yhat = self.predict(horizon=horizon)
         return random_walk_intervals(yhat, self._sigma, coverage)
+
+    def minimum_train_size(self, *, frequency: str) -> int:
+        return ets_minimum_train_size(frequency=frequency, seasonal_period=self._period_arg)
 
     def metadata(self) -> ModelMetadata:
         require_fitted(self._fitted, "ETSModel")

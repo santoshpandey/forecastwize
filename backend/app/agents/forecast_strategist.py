@@ -26,8 +26,20 @@ from app.agents.state import (
     new_run_id,
 )
 from app.data.seasonality import period_from_frequency
-from app.evidence.logger import persist_trajectory_step
+from app.evidence.logger import persist_trajectory_step, resolve_trajectory_path
+from app.forecasting.backtesting import (
+    DEFAULT_ORIGIN_PLANNING,
+    DEFAULT_TARGET_BACKTEST_FOLDS,
+    EXP009_ORIGIN_PLANNING,
+    OriginPlanning,
+)
 from app.forecasting.base import ForecastInterfaceError
+from app.forecasting.robustness import (
+    DEFAULT_SELECTION_POLICY,
+    EXP010_LAST_TO_EARLIER_VETO,
+    RobustnessAnalysis,
+    SelectionPolicy,
+)
 from app.time_utils import utc_now
 from app.tools.forecasting_tools import (
     EVALUATE_CANDIDATES,
@@ -38,6 +50,11 @@ from app.tools.forecasting_tools import (
     reject_unknown_forecast_tool,
     reject_unsupported_model_ids,
     run_named_forecast_tool,
+)
+from app.tools.robustness_tools import (
+    ANALYZE_BACKTEST_ROBUSTNESS,
+    apply_robustness_to_rows,
+    run_analyze_backtest_robustness_tool,
 )
 
 JsonObject = dict[str, Any]
@@ -103,8 +120,8 @@ class ForecastStrategistReport(BaseModel):
             if not self.backtest_executed:
                 msg = "cannot recommend a strategy before backtesting has been executed"
                 raise ValueError(msg)
-            if self.selection_rule != "official_backtest_wis":
-                msg = "strategy recommendation must use official backtest WIS"
+            if self.selection_rule not in {"official_backtest_wis", "last_fold_wis_fallback"}:
+                msg = "strategy recommendation must use official backtest WIS or recorded fallback"
                 raise ValueError(msg)
             if not self.comparison:
                 msg = "strategy recommendation requires comparison evidence"
@@ -134,6 +151,7 @@ class ForecastStrategistState(BaseModel):
     trajectory: list[TrajectoryStep] = Field(default_factory=list)
     error_type: str | None = None
     error_message: str | None = None
+    case_id: str | None = None
 
     def append_step(self, step: TrajectoryStep) -> None:
         self.trajectory.append(step)
@@ -194,8 +212,20 @@ def run_forecast_strategist(
     generated_at: datetime | None = None,
     trajectory_path: Path | None = None,
     persist_trajectory: bool = True,
+    origin_planning: OriginPlanning = DEFAULT_ORIGIN_PLANNING,
+    selection_policy: SelectionPolicy = DEFAULT_SELECTION_POLICY,
+    case_id: str | None = None,
+    append_to_trajectory: bool = False,
 ) -> ForecastStrategistState:
-    """Inspect diagnostics, propose candidates, backtest, recommend with evidence."""
+    """Inspect diagnostics, propose candidates, backtest, recommend with evidence.
+
+    Official default is ``selection_policy='exp010'`` (model-specific origins
+    plus the frozen last/earlier WIS veto). ``selection_policy='default'`` is
+    historical shared-origin parity. ``origin_planning='model_specific'``
+    without the veto reproduces EXP-009.
+    """
+    if selection_policy == "exp010":
+        origin_planning = EXP009_ORIGIN_PLANNING
     created = generated_at if generated_at is not None else utc_now()
     rid = run_id if run_id is not None else new_run_id(created, prefix="forecast-strategist")
     n_obs = None if values is None else int(np.asarray(values, dtype=float).size)
@@ -205,16 +235,30 @@ def run_forecast_strategist(
         frequency=frequency,
         horizon=horizon,
         n_observations=n_obs,
+        case_id=case_id,
     )
-    out_path = trajectory_path
-    if persist_trajectory and out_path is None:
-        out_path = _TRAJECTORIES_DIR / f"{rid}.jsonl"
-    if out_path is not None:
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        out_path.write_text("", encoding="utf-8", newline="\n")
+    out_path = resolve_trajectory_path(
+        persist=persist_trajectory,
+        path=trajectory_path,
+        run_id=rid,
+        default_dir=_TRAJECTORIES_DIR,
+        truncate=not append_to_trajectory,
+    )
 
     snapshot = _input_snapshot(n_obs, frequency, horizon, seasonal_period)
     next_id = _evidence_id_factory()
+    _record_step(
+        state,
+        created=created,
+        snapshot=snapshot,
+        tool_requested=None,
+        tool_result=None,
+        evidence_ids=[],
+        path=out_path,
+        status="running",
+        event_type="AGENT_STARTED",
+        payload={"agent": FORECAST_STRATEGIST_AGENT_ID, "horizon": horizon},
+    )
 
     if not frequency or not str(frequency).strip():
         return _fail(
@@ -327,7 +371,17 @@ def run_forecast_strategist(
             extra_eids=[diag_eid, propose_eid],
         )
     min_train = backtest_min_train_size(int(n), horizon, period)
-    if min_train is None or not backtest_is_feasible(int(n), horizon, min_train):
+    if origin_planning == EXP009_ORIGIN_PLANNING:
+        feasible = int(n) >= horizon + 1
+        eval_min_train = 1
+        eval_step = 1
+        eval_target_folds = DEFAULT_TARGET_BACKTEST_FOLDS
+    else:
+        feasible = min_train is not None and backtest_is_feasible(int(n), horizon, min_train)
+        eval_min_train = 1 if min_train is None else min_train
+        eval_step = _backtest_step(int(n), horizon, eval_min_train)
+        eval_target_folds = DEFAULT_TARGET_BACKTEST_FOLDS
+    if not feasible:
         return _fail(
             state,
             created=created,
@@ -365,12 +419,14 @@ def run_forecast_strategist(
         model_ids=tuple(proposed),
         frequency=frequency,
         horizon=horizon,
-        min_train_size=min_train,
+        min_train_size=eval_min_train,
         window_type="expanding",
-        step=_backtest_step(int(n), horizon, min_train),
+        step=eval_step,
         seed=seed,
         seasonal_period=period,
         seasonality_period=period if period is not None and period >= 1 else 1,
+        origin_planning=origin_planning,
+        target_folds=eval_target_folds,
     )
     eval_env, eval_retries = _call_tool(
         EVALUATE_CANDIDATES,
@@ -390,6 +446,7 @@ def run_forecast_strategist(
         path=out_path,
         status="retrying" if eval_retries else "running",
         retry_number=eval_retries,
+        event_type="TOOL_COMPLETED" if eval_env.ok else "TOOL_FAILED",
     )
 
     if not eval_env.ok:
@@ -411,7 +468,92 @@ def run_forecast_strategist(
         )
 
     rows = _rows_from_payload(eval_env.payload)
-    winner, rule = _official_winner(rows)
+    _record_step(
+        state,
+        created=created,
+        snapshot=snapshot,
+        tool_requested=None,
+        tool_result=None,
+        evidence_ids=[eval_eid],
+        path=out_path,
+        status="running",
+        event_type="BACKTEST_COMPLETED",
+        payload=_backtest_event_payload(rows),
+        decision={"backtest_executed": True},
+    )
+    robustness_eid: str | None = None
+    if selection_policy == "exp010":
+        rob_env = run_analyze_backtest_robustness_tool(
+            rows,
+            threshold_r=EXP010_LAST_TO_EARLIER_VETO,
+            origins_aligned=origin_planning == "shared",
+        )
+        robustness_eid = _store_payload(
+            state, next_id, rob_env.tool_name, dict(rob_env.payload)
+        )
+        _record_step(
+            state,
+            created=created,
+            snapshot=snapshot,
+            tool_requested=ANALYZE_BACKTEST_ROBUSTNESS,
+            tool_result={
+                "ok": rob_env.ok,
+                "error_type": rob_env.error_type,
+                "error_message": rob_env.error_message,
+                "payload": rob_env.payload,
+            },
+            evidence_ids=[robustness_eid],
+            path=out_path,
+            status="running",
+            event_type="ROBUSTNESS_ANALYZED" if rob_env.ok else "TOOL_FAILED",
+            payload={
+                "threshold_r": EXP010_LAST_TO_EARLIER_VETO,
+                "origins_aligned": origin_planning == "shared",
+            },
+        )
+        if not rob_env.ok:
+            return _fail(
+                state,
+                created=created,
+                snapshot=snapshot,
+                path=out_path,
+                next_id=next_id,
+                error_type=rob_env.error_type or "RobustnessAnalysisFailed",
+                error_message=rob_env.error_message or "analyze_backtest_robustness failed",
+                extra_eids=[diag_eid, propose_eid, eval_eid, robustness_eid],
+            )
+        analysis = RobustnessAnalysis.model_validate(rob_env.payload)
+        rows = apply_robustness_to_rows(rows, analysis)
+        winner = analysis.selected_model_id
+        rule = analysis.selection_rule
+        _record_robustness_model_events(
+            state,
+            created=created,
+            snapshot=snapshot,
+            path=out_path,
+            analysis=analysis,
+            evidence_ids=[eval_eid, robustness_eid],
+        )
+    else:
+        winner, rule = _official_winner(rows)
+        if winner is not None:
+            win_row = next(row for row in rows if row.model_id == winner)
+            _record_step(
+                state,
+                created=created,
+                snapshot=snapshot,
+                tool_requested=None,
+                tool_result=None,
+                evidence_ids=[eval_eid],
+                path=out_path,
+                status="running",
+                event_type="MODEL_SELECTED",
+                payload={
+                    "model": winner,
+                    "official_wis": win_row.official_wis,
+                    "selection_rule": rule,
+                },
+            )
     report = _synthesize_report(
         diagnostics=diagnostics,
         context=context,
@@ -423,6 +565,7 @@ def run_forecast_strategist(
         propose_eid=propose_eid,
         eval_eid=eval_eid,
         supported_eid=supported_eid,
+        robustness_eid=robustness_eid,
         backtest_executed=bool(eval_env.payload.get("backtest_executed")),
     )
     state.report = report
@@ -492,7 +635,14 @@ def _call_tool(
 
 
 def _official_winner(rows: list[CandidateEvalRow]) -> tuple[str | None, SelectionRule]:
-    ranked = [row for row in rows if row.rank is not None and row.official_wis is not None]
+    ranked = [
+        row
+        for row in rows
+        if row.rank is not None
+        and row.official_wis is not None
+        and row.n_folds_failed == 0
+        and row.n_folds_planned > 0
+    ]
     ranked.sort(key=lambda row: (row.rank if row.rank is not None else 10**9, row.model_id))
     if not ranked:
         return None, "none"
@@ -516,12 +666,15 @@ def _synthesize_report(
     propose_eid: str,
     eval_eid: str,
     supported_eid: str,
+    robustness_eid: str | None = None,
     backtest_executed: bool,
 ) -> ForecastStrategistReport:
     claims: list[CitedClaim] = []
     risks: list[CitedClaim] = []
     investigations: list[InvestigationRecommendation] = []
     used = [diag_eid, propose_eid, supported_eid, eval_eid]
+    if robustness_eid is not None:
+        used.append(robustness_eid)
 
     claims.append(
         CitedClaim(
@@ -638,17 +791,65 @@ def _synthesize_report(
             ),
         )
     )
+    claims.append(
+        CitedClaim(
+            kind="observation",
+            topic="backtest",
+            statement=_eligibility_summary(rows),
+            evidence_ids=[eval_eid],
+            uncertainty="low",
+            why_uncertainty=(
+                "Eligibility is whether planned official folds all completed. "
+                "Skipped short origins are planning, not failed executions."
+            ),
+        )
+    )
+    if robustness_eid is not None:
+        claims.append(
+            CitedClaim(
+                kind="observation",
+                topic="backtest",
+                statement=_robustness_summary(rows, rule),
+                evidence_ids=[eval_eid, robustness_eid],
+                uncertainty="low",
+                why_uncertainty=(
+                    "Last/earlier fold WIS is computed from evaluate_candidates folds. "
+                    "Holdout values are not used."
+                ),
+            )
+        )
     if winner is not None:
         win_row = next(row for row in rows if row.model_id == winner)
+        fold_sizes = ",".join(str(n) for n in win_row.fold_train_sizes) or "none"
+        fold_wis = ",".join("null" if v is None else f"{v:.6g}" for v in win_row.fold_wis) or "none"
+        if rule == "last_fold_wis_fallback":
+            why_selected = (
+                f"Recommend strategy_id={winner} by last-fold WIS fallback after every "
+                f"officially eligible model was vetoed. last_fold={win_row.recent_fold_mean_wis}."
+            )
+        elif robustness_eid is not None:
+            why_selected = (
+                f"Recommend strategy_id={winner} because it passed the last/earlier "
+                f"instability veto and ranked first on official backtest WIS "
+                f"({win_row.official_wis}) among remaining models."
+            )
+        else:
+            why_selected = (
+                f"Recommend strategy_id={winner} because it ranked first on official "
+                f"backtest WIS ({win_row.official_wis})."
+            )
         claims.append(
             CitedClaim(
                 kind="observation",
                 topic="strategy",
                 statement=(
-                    f"Recommend strategy_id={winner} because it ranked first on official "
-                    f"backtest WIS ({win_row.official_wis})."
+                    f"{why_selected} "
+                    f"min_train_size={win_row.min_train_size}; "
+                    f"planned={win_row.n_folds_planned} completed={win_row.n_folds_completed} "
+                    f"failed={win_row.n_folds_failed}; fold_train_sizes=[{fold_sizes}]; "
+                    f"fold_wis=[{fold_wis}]. Completed-only WIS is not the selection metric."
                 ),
-                evidence_ids=[eval_eid],
+                evidence_ids=[eval_eid] if robustness_eid is None else [eval_eid, robustness_eid],
                 uncertainty="medium",
                 why_uncertainty=(
                     "Official WIS is the measured ranking. It is not a holdout production "
@@ -656,6 +857,18 @@ def _synthesize_report(
                 ),
             )
         )
+        rejected = [row for row in rows if row.model_id != winner]
+        if rejected:
+            claims.append(
+                CitedClaim(
+                    kind="observation",
+                    topic="strategy",
+                    statement=_rejection_summary(rejected),
+                    evidence_ids=[eval_eid],
+                    uncertainty="low",
+                    why_uncertainty="Rejection reasons are copied from evaluate_candidates.",
+                )
+            )
     else:
         risks.append(
             CitedClaim(
@@ -723,6 +936,121 @@ def _comparison_summary(rows: list[CandidateEvalRow]) -> str:
         wis = "None" if row.official_wis is None else f"{row.official_wis:.6g}"
         bits.append(f"{row.model_id} rank={row.rank} official_wis={wis}")
     return "Backtest comparison: " + "; ".join(bits)
+
+
+def _eligibility_summary(rows: list[CandidateEvalRow]) -> str:
+    bits: list[str] = []
+    for row in rows:
+        bits.append(
+            f"{row.model_id} eligible={row.eligible} min_train={row.min_train_size} "
+            f"planned={row.n_folds_planned} completed={row.n_folds_completed} "
+            f"failed={row.n_folds_failed} skipped_short={row.n_origins_skipped_insufficient_train}"
+        )
+    return "Model eligibility: " + "; ".join(bits)
+
+
+def _robustness_summary(rows: list[CandidateEvalRow], rule: SelectionRule) -> str:
+    bits: list[str] = []
+    for row in rows:
+        if row.recent_vs_earlier_ratio is None:
+            ratio = "None"
+        else:
+            ratio = f"{row.recent_vs_earlier_ratio:.6g}"
+        bits.append(
+            f"{row.model_id} selectable={row.selectable} vetoed={row.vetoed} "
+            f"ratio={ratio} reason={row.veto_reason or row.rejection_reason or 'none'}"
+        )
+    return f"Robustness gate (rule={rule}): " + "; ".join(bits)
+
+
+def _rejection_summary(rows: list[CandidateEvalRow]) -> str:
+    bits: list[str] = []
+    for row in rows:
+        reason = row.rejection_reason or "unspecified"
+        wis = "None" if row.official_wis is None else f"{row.official_wis:.6g}"
+        bits.append(f"{row.model_id} rejected ({reason}) official_wis={wis}")
+    return "Rejected models: " + "; ".join(bits)
+
+
+def _backtest_event_payload(rows: list[CandidateEvalRow]) -> JsonObject:
+    return {
+        "models": [
+            {
+                "model": row.model_id,
+                "planned_folds": row.n_folds_planned,
+                "completed_folds": row.n_folds_completed,
+                "failed_folds": row.n_folds_failed,
+                "official_wis": row.official_wis,
+                "eligible": row.eligible,
+                "robustness_ratio": row.recent_vs_earlier_ratio,
+            }
+            for row in rows
+        ]
+    }
+
+
+def _record_robustness_model_events(
+    state: ForecastStrategistState,
+    *,
+    created: datetime,
+    snapshot: JsonObject,
+    path: Path | None,
+    analysis: RobustnessAnalysis,
+    evidence_ids: list[str],
+) -> None:
+    for row in analysis.models:
+        if row.vetoed:
+            event_type = "MODEL_VETOED"
+        elif row.official_eligible and row.selectable:
+            event_type = "MODEL_ELIGIBLE"
+        else:
+            event_type = "MODEL_ELIGIBLE"
+        _record_step(
+            state,
+            created=created,
+            snapshot=snapshot,
+            tool_requested=None,
+            tool_result=None,
+            evidence_ids=evidence_ids,
+            path=path,
+            status="running",
+            event_type=event_type,
+            payload={
+                "model": row.model_id,
+                "official_wis": row.official_wis,
+                "earlier_mean": row.earlier_fold_mean_wis,
+                "recent_wis": row.recent_fold_mean_wis,
+                "last_earlier_ratio": row.recent_vs_earlier_ratio,
+                "threshold": analysis.threshold_r,
+                "stability_status": "unstable" if row.vetoed else "stable",
+                "veto_status": row.vetoed,
+                "veto_reason": row.veto_reason,
+                "selectable": row.selectable,
+                "official_eligible": row.official_eligible,
+            },
+        )
+    if analysis.selected_model_id is not None:
+        selected = next(
+            item for item in analysis.models if item.model_id == analysis.selected_model_id
+        )
+        _record_step(
+            state,
+            created=created,
+            snapshot=snapshot,
+            tool_requested=None,
+            tool_result=None,
+            evidence_ids=evidence_ids,
+            path=path,
+            status="running",
+            event_type="MODEL_SELECTED",
+            payload={
+                "model": analysis.selected_model_id,
+                "official_wis": selected.official_wis,
+                "selection_rule": analysis.selection_rule,
+                "used_last_fold_fallback": analysis.used_last_fold_fallback,
+                "threshold": analysis.threshold_r,
+            },
+        )
 
 
 def _backtest_step(n: int, horizon: int, min_train_size: int) -> int:
@@ -839,7 +1167,20 @@ def _record_step(
     status: str,
     decision: JsonObject | None = None,
     retry_number: int = 0,
+    event_type: str | None = None,
+    payload: JsonObject | None = None,
 ) -> None:
+    inferred = event_type
+    if inferred is None:
+        if tool_requested is not None:
+            failed = isinstance(tool_result, dict) and tool_result.get("ok") is False
+            inferred = "TOOL_FAILED" if failed else "TOOL_COMPLETED"
+        elif status == "completed":
+            inferred = "AGENT_COMPLETED"
+        elif status == "failed":
+            inferred = "AGENT_DECISION"
+        else:
+            inferred = "AGENT_DECISION"
     step = TrajectoryStep(
         run_id=state.run_id,
         agent_id=FORECAST_STRATEGIST_AGENT_ID,
@@ -851,6 +1192,11 @@ def _record_step(
         evidence_ids=evidence_ids,
         retry_number=retry_number,
         final_status=status,  # type: ignore[arg-type]
+        case_id=state.case_id,
+        event_type=inferred,
+        actor=FORECAST_STRATEGIST_AGENT_ID,
+        payload=payload,
+        safe_tool_arguments=None if tool_requested is None else {"tool_name": tool_requested},
     )
     state.retry_number = max(state.retry_number, retry_number)
     state.append_step(step)

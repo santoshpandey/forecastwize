@@ -171,3 +171,63 @@ def test_cannot_decide_after_reject() -> None:
             retry_number=0,
         )
     assert exc.value.code == "checkpoint_not_waiting"
+
+
+def test_empty_note_is_not_invented() -> None:
+    result = apply_human_checkpoint(
+        _waiting(checkpoint_id="ckpt-run_wait"),
+        action="accept",
+        run_id="run_wait",
+        retry_number=0,
+        note="   ",
+    )
+    assert result.checkpoint.decision_note is None
+    assert result.trajectory_step.decision is not None
+    assert result.trajectory_step.decision["note"] is None
+    assert result.trajectory_step.payload is not None
+    assert "note" not in result.trajectory_step.payload
+
+
+def test_human_decision_correlates_checkpoint_id() -> None:
+    waiting = _waiting(checkpoint_id="ckpt-run_wait")
+    result = apply_human_checkpoint(
+        waiting,
+        action="accept",
+        run_id="run_wait",
+        retry_number=0,
+        evidence_ids=["E17"],
+    )
+    assert result.checkpoint.checkpoint_id == "ckpt-run_wait"
+    assert result.trajectory_step.event_type == "HUMAN_DECISION"
+    assert result.trajectory_step.actor == HUMAN_AGENT_ID
+    assert result.trajectory_step.payload is not None
+    assert result.trajectory_step.payload["checkpoint_id"] == "ckpt-run_wait"
+    assert result.trajectory_step.payload["decision"] == "accept"
+    assert result.trajectory_step.evidence_ids == ["E17"]
+    assert result.continuation_step is not None
+    assert result.continuation_step.event_type == "RUN_COMPLETED"
+    assert result.continuation_step.payload is not None
+    assert result.continuation_step.payload["checkpoint_id"] == "ckpt-run_wait"
+    assert result.continuation_step.payload["continuation_of"] == "HUMAN_DECISION"
+
+
+def test_review_has_human_decision_but_no_completion() -> None:
+    result = apply_human_checkpoint(
+        _waiting(checkpoint_id="ckpt-run_wait"),
+        action="review",
+        run_id="run_wait",
+        retry_number=0,
+        note="Need another look.",
+    )
+    assert result.trajectory_step.event_type == "HUMAN_DECISION"
+    assert result.trajectory_step.payload is not None
+    assert result.trajectory_step.payload["decision"] == "review"
+    assert result.trajectory_step.payload["note"] == "Need another look."
+    assert result.continuation_step is None
+
+
+def test_missing_checkpoint_id_is_derived_from_run_id() -> None:
+    result = apply_human_checkpoint(_waiting(), action="reject", run_id="run_x", retry_number=0)
+    assert result.checkpoint.checkpoint_id == "ckpt-run_x"
+    assert result.trajectory_step.payload is not None
+    assert result.trajectory_step.payload["checkpoint_id"] == "ckpt-run_x"

@@ -24,7 +24,7 @@ from app.agents.state import (
     new_run_id,
 )
 from app.data.validator import SeriesInspection
-from app.evidence.logger import persist_trajectory_step
+from app.evidence.logger import persist_trajectory_step, resolve_trajectory_path
 from app.forecasting.base import ForecastInterfaceError
 from app.time_utils import utc_now
 from app.tools.data_tools import (
@@ -71,6 +71,8 @@ def run_data_detective(
     generated_at: datetime | None = None,
     trajectory_path: Path | None = None,
     persist_trajectory: bool = True,
+    case_id: str | None = None,
+    append_to_trajectory: bool = False,
 ) -> DataDetectiveState:
     """Run the Data Detective pipeline: approved diagnostic tools, then structured claims.
 
@@ -88,15 +90,34 @@ def run_data_detective(
         n_observations=n_obs,
         retry_number=0,
     )
-    out_path = trajectory_path
-    if persist_trajectory and out_path is None:
-        out_path = _TRAJECTORIES_DIR / f"{rid}.jsonl"
-    if out_path is not None:
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        out_path.write_text("", encoding="utf-8", newline="\n")
+    out_path = resolve_trajectory_path(
+        persist=persist_trajectory,
+        path=trajectory_path,
+        run_id=rid,
+        default_dir=_TRAJECTORIES_DIR,
+        truncate=not append_to_trajectory,
+    )
 
     snapshot = _input_snapshot(n_obs, frequency, seasonal_period)
     next_id = _evidence_id_factory()
+    start_step = TrajectoryStep(
+        run_id=state.run_id,
+        agent_id=DATA_DETECTIVE_AGENT_ID,
+        timestamp=created,
+        input_state=snapshot,
+        tool_requested=None,
+        tool_result=None,
+        decision={"event": "AGENT_STARTED"},
+        evidence_ids=[],
+        retry_number=0,
+        final_status="running",
+        case_id=case_id,
+        event_type="AGENT_STARTED",
+        actor=DATA_DETECTIVE_AGENT_ID,
+        payload={"agent": DATA_DETECTIVE_AGENT_ID},
+    )
+    state.append_step(start_step)
+    persist_trajectory_step(out_path, start_step)
 
     inspection: SeriesInspection | None = None
     inspect_ok = False
@@ -117,6 +138,7 @@ def run_data_detective(
             evidence_ids=[inspect_eid],
             retry_number=inspect_retries,
             path=out_path,
+            case_id=case_id,
         )
         inspect_ok = inspect_env.ok
         if inspect_ok:
@@ -143,6 +165,7 @@ def run_data_detective(
             evidence_ids=[inspect_eid],
             retry_number=0,
             path=out_path,
+            case_id=case_id,
         )
 
     quality_env, quality_retries = _call_tool(
@@ -161,6 +184,7 @@ def run_data_detective(
         evidence_ids=[quality_eid],
         retry_number=quality_retries,
         path=out_path,
+        case_id=case_id,
     )
 
     skip_screens = not inspect_ok
@@ -170,7 +194,9 @@ def run_data_detective(
         state.error_message = inspect_env.error_message or inspect_env.payload.get("summary")
         report = _report_invalid(state)
         state.report = report
-        _record_decision_step(state, created=created, snapshot=snapshot, path=out_path)
+        _record_decision_step(
+            state, created=created, snapshot=snapshot, path=out_path, case_id=case_id
+        )
         return state
 
     for tool_name in _SCREEN_TOOLS:
@@ -192,11 +218,14 @@ def run_data_detective(
             evidence_ids=[eid],
             retry_number=retries,
             path=out_path,
+            case_id=case_id,
         )
 
     state.report = _synthesize_report(state)
     state.status = "completed"
-    _record_decision_step(state, created=created, snapshot=snapshot, path=out_path)
+    _record_decision_step(
+        state, created=created, snapshot=snapshot, path=out_path, case_id=case_id
+    )
     return state
 
 
@@ -278,10 +307,12 @@ def _record_tool_step(
     evidence_ids: list[str],
     retry_number: int,
     path: Path | None,
+    case_id: str | None = None,
 ) -> None:
     status = "retrying" if retry_number else "running"
     if not envelope.ok and envelope.tool_name == INSPECT_SERIES:
         status = "failed"
+    event_type = "TOOL_FAILED" if not envelope.ok else "TOOL_COMPLETED"
     step = TrajectoryStep(
         run_id=state.run_id,
         agent_id=DATA_DETECTIVE_AGENT_ID,
@@ -298,6 +329,10 @@ def _record_tool_step(
         evidence_ids=evidence_ids,
         retry_number=retry_number,
         final_status=status,
+        case_id=case_id,
+        event_type=event_type,
+        actor=DATA_DETECTIVE_AGENT_ID,
+        safe_tool_arguments={"tool_name": envelope.tool_name},
     )
     state.retry_number = max(state.retry_number, retry_number)
     state.append_step(step)
@@ -310,9 +345,11 @@ def _record_decision_step(
     created: datetime,
     snapshot: JsonObject,
     path: Path | None,
+    case_id: str | None = None,
 ) -> None:
     report = state.report
     used = list(report.evidence_ids_used) if report is not None else []
+    event_type = "AGENT_COMPLETED" if state.status == "completed" else "AGENT_DECISION"
     step = TrajectoryStep(
         run_id=state.run_id,
         agent_id=DATA_DETECTIVE_AGENT_ID,
@@ -324,6 +361,13 @@ def _record_decision_step(
         evidence_ids=used,
         retry_number=state.retry_number,
         final_status=state.status,
+        case_id=case_id,
+        event_type=event_type,
+        actor=DATA_DETECTIVE_AGENT_ID,
+        payload={
+            "forecastability": None if report is None else report.forecastability,
+            "status": state.status,
+        },
     )
     state.append_step(step)
     _persist_step(path, step)

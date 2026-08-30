@@ -10,7 +10,8 @@
 - Conservative deterministic diagnostics: outliers, causal rolling anomalies, trend,
   seasonality, single mean-shift screen (no auto-edit of the series)
 
-- Common `ForecastModel` interface (`fit` / `predict` / `predict_interval` / `metadata`)
+- Common `ForecastModel` interface (`fit` / `predict` / `predict_interval` /
+  `metadata` / `minimum_train_size`)
   and typed `ForecastResult`
 - Shared metrics: MAE, RMSE, sMAPE, WMAPE, MASE, WIS, interval coverage and width
 - Explicit baseline models (no LLM, no auto-selection):
@@ -26,15 +27,22 @@
   test start. Incomplete tails are not planned. Failed folds stay in the record;
   official aggregate means are None if any fold failed. Ranking by official WIS is
   comparison evidence only — not a generated forecast.
-- Shared engine: `run_rolling_origin_backtest`. The `backtest` tool
-  (`backend/app/tools/backtest_tools.py`) constructs named baseline models and
-  calls that function. Baseline code may call the engine with any `ForecastModel`
-  factories.
-- Orchestrator (`run_orchestrator`) selects `strategy_id` from official backtest
-  WIS over the **full allow-list** (strategy shortlist is a hypothesis), then
-  calls `run_baseline_forecast` for generation. Selection and generation stay
-  separate. Verification FAIL retries only if an untried model has strictly
-  better official backtest WIS.
+- Shared engine: `run_rolling_origin_backtest` is the **baseline** path and
+  the historical EXP-008 advanced path. Official advanced evaluation uses
+  `run_model_specific_origin_backtest` plus `analyze_backtest_robustness`
+  (`selection_policy='exp010'`, `R=5` frozen). EXP-009 planner-only
+  (`--origin-planning model_specific`) remains reproducible and **failed**
+  catalog WIS (`evaluation/artifacts/EXP-009-ets-arima-min-train/`).
+  Frozen EXP-010 isolate:
+  `evaluation/artifacts/EXP-010-robust-model-selection/`. Official cited
+  pair is `evaluation/results/comparison.json`
+  (`comparison-20260830T030644Z`).
+- Orchestrator (`run_orchestrator`) selects `strategy_id` from official
+  backtest WIS among models that pass the EXP-010 veto (strategy shortlist
+  is a hypothesis), then calls `run_baseline_forecast` for generation.
+  Selection and generation stay separate. The LLM does not emit yhat or
+  rank by prose. Verification FAIL retries only if an untried **selectable**
+  model has strictly better official backtest WIS (vetoed models skipped).
 
 Training copies are used. Evaluation harnesses apply a named train-only
 missing-value policy (`linear_interpolate_train`) after
@@ -42,7 +50,8 @@ missing-value policy (`linear_interpolate_train`) after
 reject remaining non-finite values. Catalog: `evaluation/cases/` and
 `data/evaluation/`. Scores live in generated JSON, not in this page. Cited
 official pair: `evaluation/results/comparison.json`
-(`comparison-20260829T125254Z`); WIS `relative_improvement` **0.0**.
+(`comparison-20260830T030644Z`); WIS `relative_improvement`
+**0.13264925035654543**. The advanced path does not win every case.
 
 Every `ForecastResult` includes: `model`, `training_range`, `forecast_horizon`,
 `frequency`, `configuration`, `random_seed`, `generated_at` (UTC ISO 8601).

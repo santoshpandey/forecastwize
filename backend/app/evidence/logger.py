@@ -14,8 +14,10 @@ from app.evidence.trajectory import (
     ToolInvocation,
     ToolOutputRef,
     TrajectoryError,
+    TrajectoryEventType,
     TrajectoryRecord,
     TrajectoryStatus,
+    VALID_EVENT_TYPES,
     instruction_for,
 )
 
@@ -119,6 +121,29 @@ class EvidenceLogger:
         return record
 
 
+def resolve_trajectory_path(
+    *,
+    persist: bool,
+    path: Path | None,
+    run_id: str,
+    default_dir: Path,
+    truncate: bool,
+) -> Path | None:
+    """Choose a JSONL path. Truncate only when this call owns a new standalone file."""
+    if not persist and path is None:
+        return None
+    out = path
+    if persist and out is None:
+        out = default_dir / f"{run_id}.jsonl"
+        truncate = True
+    if out is None:
+        return None
+    out.parent.mkdir(parents=True, exist_ok=True)
+    if truncate:
+        out.write_text("", encoding="utf-8", newline="\n")
+    return out
+
+
 def persist_trajectory_step(path: Path | None, step: TrajectoryStep) -> TrajectoryRecord:
     """Shared persist used by every agent. `path is None` skips disk writes."""
     store = None
@@ -162,6 +187,18 @@ def build_record(
     next_step = _next_step(step.decision, step.final_status)
     final_result = _final_result(step.final_status, step.decision, error, step.evidence_ids)
     status: TrajectoryStatus = step.final_status
+    event_id = f"{step.run_id}:{step_index}"
+    actor = step.actor if step.actor else step.agent_id
+    event_type = _coerce_event_type(step.event_type)
+    payload = redact_object(step.payload) if step.payload is not None else None
+    if step.safe_tool_arguments and invocation is not None:
+        invocation = ToolInvocation(
+            tool_name=invocation.tool_name,
+            arguments_summary=summarize_input(dict(step.safe_tool_arguments)),
+        )
+    artifact_ref = step.artifact_ref
+    if artifact_ref is None and output_ref is not None:
+        artifact_ref = output_ref.artifact_id
     return TrajectoryRecord(
         run_id=step.run_id,
         agent_id=step.agent_id,
@@ -183,7 +220,22 @@ def build_record(
         tool_requested=tool_name,
         tool_result=compact_result,
         final_status=status,
+        event_id=event_id,
+        case_id=step.case_id,
+        sequence=step_index,
+        event_type=event_type,
+        actor=actor,
+        payload=payload if isinstance(payload, dict) or payload is None else None,
+        artifact_ref=artifact_ref,
     )
+
+
+def _coerce_event_type(value: str | None) -> TrajectoryEventType | None:
+    if value is None:
+        return None
+    if value in VALID_EVENT_TYPES:
+        return value  # type: ignore[return-value]
+    return None
 
 
 def _persist_tool_output(

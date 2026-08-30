@@ -20,6 +20,14 @@ from app.forecasting._support import (
 from app.forecasting.base import ForecastInterfaceError, ForecastModel, ModelMetadata
 
 
+def arima_minimum_train_size(*, frequency: str, seasonal_period: int | None) -> int:
+    """Same length rule as ``ARIMAModel.fit`` (2*m+8 if seasonal, else 8)."""
+    period = seasonal_period if seasonal_period is not None else period_from_frequency(frequency)
+    if period is not None and period >= 2:
+        return 2 * int(period) + 8
+    return 8
+
+
 class ARIMAModel(ForecastModel):
     """Non-seasonal ARIMA(1,1,1); if a seasonal period is known, airline SARIMA.
 
@@ -51,17 +59,17 @@ class ARIMAModel(ForecastModel):
             period = self._period_arg
         else:
             period = period_from_frequency(frequency)
+        needed = arima_minimum_train_size(frequency=frequency, seasonal_period=self._period_arg)
         order = (1, 1, 1)
         seasonal_order = (0, 0, 0, 0)
         if period is not None and period >= 2:
-            min_n = 2 * int(period) + 8
-            if y.size < min_n:
-                msg = f"Seasonal ARIMA needs at least {min_n} observations; got {y.size}."
+            if y.size < needed:
+                msg = f"Seasonal ARIMA needs at least {needed} observations; got {y.size}."
                 raise ForecastInterfaceError(msg)
             order = (0, 1, 1)
             seasonal_order = (0, 1, 1, int(period))
-        elif y.size < 8:
-            msg = f"ARIMA(1,1,1) needs at least 8 observations; got {y.size}."
+        elif y.size < needed:
+            msg = f"ARIMA(1,1,1) needs at least {needed} observations; got {y.size}."
             raise ForecastInterfaceError(msg)
 
         try:
@@ -111,6 +119,9 @@ class ARIMAModel(ForecastModel):
         except (ValueError, AttributeError, TypeError, IndexError):
             pass
         return random_walk_intervals(yhat, self._sigma, coverage)
+
+    def minimum_train_size(self, *, frequency: str) -> int:
+        return arima_minimum_train_size(frequency=frequency, seasonal_period=self._period_arg)
 
     def metadata(self) -> ModelMetadata:
         require_fitted(self._fitted, "ARIMAModel")

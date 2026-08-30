@@ -4,6 +4,7 @@ Usage (from the repository root):
 
     python evaluation/run_agent.py
 
+Official default is the promoted EXP-010 path (`selection_policy=exp010`).
 Loads **exactly** the same registered cases as run_baseline.py, runs
 `run_orchestrator` on training rows only, scores the holdout with shared
 forecasting metrics (WIS primary), and writes evaluation/results/agent.json.
@@ -35,8 +36,15 @@ for _path in (_BACKEND, _ROOT):
 from app.agents.orchestrator import run_orchestrator
 from app.data.schemas import CONTEXT_COL, EVENT_COL, TIMESTAMP_COL, VALUE_COL
 from app.data.validator import inspect_csv
+from app.forecasting.backtesting import (
+    DEFAULT_ORIGIN_PLANNING,
+    EXP009_ORIGIN_PLANNING,
+    OriginPlanning,
+)
 from app.forecasting.base import ForecastInterfaceError, ForecastResult
+from app.forecasting.robustness import DEFAULT_SELECTION_POLICY, SelectionPolicy
 from app.forecasting.missing_policy import LINEAR_INTERPOLATE_TRAIN, apply_linear_interpolate_train
+from app.evidence.trajectory import TRAJECTORY_SCHEMA_VERSION
 from app.services.forecast_service import BASELINE_MODEL_IDS
 from app.tools.verification_tools import ForecastSnapshot
 from evaluation.cases.generators.catalog import DATA_DIR, CaseSpec, load_catalog
@@ -59,6 +67,7 @@ from evaluation.run_baseline import (
 
 DEFAULT_JSON = _ROOT / "evaluation" / "results" / "agent.json"
 DEFAULT_MD = _ROOT / "evaluation" / "results" / "agent.md"
+DEFAULT_TRAJECTORY_ROOT = _ROOT / "evaluation" / "results" / "trajectories"
 
 
 def run_agent_evaluation(
@@ -68,8 +77,13 @@ def run_agent_evaluation(
     candidate_model_ids: tuple[str, ...] | None = None,
     generated_at: datetime | None = None,
     data_dir: Path | None = None,
-    persist_trajectory: bool = False,
+    persist_trajectory: bool = True,
+    origin_planning: OriginPlanning = DEFAULT_ORIGIN_PLANNING,
+    selection_policy: SelectionPolicy = DEFAULT_SELECTION_POLICY,
+    trajectory_root: Path | None = None,
 ) -> BaselineEvaluationResult:
+    if selection_policy == "exp010":
+        origin_planning = EXP009_ORIGIN_PLANNING
     catalog = load_catalog()
     case_list = [case.case_id for case in catalog.cases]
     candidates = (
@@ -79,9 +93,27 @@ def run_agent_evaluation(
     created = generated_at if generated_at is not None else datetime.now(UTC)
     run_id = "agent-" + created.strftime("%Y%m%dT%H%M%SZ")
     series_dir = data_dir if data_dir is not None else DATA_DIR
+    json_path = output_json if output_json is not None else DEFAULT_JSON
+    traj_root = (
+        trajectory_root
+        if trajectory_root is not None
+        else json_path.parent / "trajectories" / run_id
+    )
+    commit = git_commit(_ROOT)
+    pins = runtime_library_pins()
+    eval_meta = {
+        "evaluation_run_id": run_id,
+        "git_commit": commit,
+        "selection_policy": selection_policy,
+        "origin_planning": origin_planning,
+        **pins,
+    }
     per_case: list[CaseEvaluation] = []
 
     for case in catalog.cases:
+        case_path = None
+        if persist_trajectory:
+            case_path = traj_root / f"case_{case.case_id}.jsonl"
         per_case.append(
             _evaluate_case(
                 case,
@@ -90,13 +122,17 @@ def run_agent_evaluation(
                 generated_at=created,
                 persist_trajectory=persist_trajectory,
                 evaluation_run_id=run_id,
+                origin_planning=origin_planning,
+                selection_policy=selection_policy,
+                trajectory_path=case_path,
+                evaluation_metadata=eval_meta,
             )
         )
 
     result = BaselineEvaluationResult(
         evaluation_run_id=run_id,
         timestamp=created,
-        git_commit=git_commit(_ROOT),
+        git_commit=commit,
         system="agent",
         catalog_id=catalog.catalog_id,
         catalog_version=catalog.catalog_version,
@@ -106,11 +142,15 @@ def run_agent_evaluation(
             "coverage": COVERAGE,
             "holdout_passed_to_graph": False,
             "train_missing_policy": LINEAR_INTERPOLATE_TRAIN,
+            "origin_planning": origin_planning,
+            "selection_policy": selection_policy,
             **runtime_library_pins(),
         },
         model_configuration={
             "candidate_model_ids": ",".join(candidates),
             "selection": "orchestrator_backtest_wis_then_verify",
+            "origin_planning": origin_planning,
+            "selection_policy": selection_policy,
         },
         per_case=per_case,
         aggregate=aggregate_cases(per_case),
@@ -128,8 +168,18 @@ def run_agent_evaluation(
             "cases_seconds": sum(row.runtime_seconds for row in per_case),
         },
     )
-    json_path = output_json if output_json is not None else DEFAULT_JSON
     md_path = output_md if output_md is not None else DEFAULT_MD
+    if persist_trajectory:
+        _write_trajectory_manifest(
+            traj_root,
+            evaluation_run_id=run_id,
+            created_at=created,
+            git_commit=commit,
+            selection_policy=selection_policy,
+            origin_planning=origin_planning,
+            case_list=case_list,
+            per_case=per_case,
+        )
     json_path.parent.mkdir(parents=True, exist_ok=True)
     payload = json.dumps(result.model_dump(mode="json"), indent=2, allow_nan=False) + "\n"
     with json_path.open("w", encoding="utf-8", newline="\n") as handle:
@@ -147,6 +197,10 @@ def _evaluate_case(
     generated_at: datetime,
     persist_trajectory: bool,
     evaluation_run_id: str,
+    origin_planning: OriginPlanning,
+    selection_policy: SelectionPolicy,
+    trajectory_path: Path | None = None,
+    evaluation_metadata: dict[str, object] | None = None,
 ) -> CaseEvaluation:
     t0 = time.perf_counter()
     path = series_dir / case.csv_filename
@@ -182,6 +236,11 @@ def _evaluate_case(
             run_id=f"{evaluation_run_id}-{case.case_id}",
             generated_at=generated_at,
             persist_trajectory=persist_trajectory,
+            trajectory_path=trajectory_path,
+            origin_planning=origin_planning,
+            selection_policy=selection_policy,
+            case_id=case.case_id,
+            evaluation_metadata=evaluation_metadata,
         )
         forecast = state.forecast
         if forecast is None:
@@ -215,6 +274,16 @@ def _evaluate_case(
                     n_folds_completed=row.n_folds_completed,
                     n_folds_failed=row.n_folds_failed,
                     rank=row.rank,
+                    min_train_size=row.min_train_size,
+                    eligible=row.eligible,
+                    rejection_reason=row.rejection_reason,
+                    fold_train_sizes=list(row.fold_train_sizes),
+                    fold_wis=list(row.fold_wis),
+                    n_origins_skipped_insufficient_train=row.n_origins_skipped_insufficient_train,
+                    vetoed=row.vetoed,
+                    veto_reason=row.veto_reason,
+                    selectable=row.selectable,
+                    recent_vs_earlier_ratio=row.recent_vs_earlier_ratio,
                 )
                 for row in state.strategist_report.comparison
             ]
@@ -282,6 +351,45 @@ def _forecast_arrays(
     )
 
 
+def _write_trajectory_manifest(
+    traj_root: Path,
+    *,
+    evaluation_run_id: str,
+    created_at: datetime,
+    git_commit: str | None,
+    selection_policy: SelectionPolicy,
+    origin_planning: OriginPlanning,
+    case_list: list[str],
+    per_case: list[CaseEvaluation],
+) -> Path:
+    traj_root.mkdir(parents=True, exist_ok=True)
+    cases: list[dict[str, object]] = []
+    for row in per_case:
+        name = f"case_{row.case_id}.jsonl"
+        path = traj_root / name
+        cases.append(
+            {
+                "case_id": row.case_id,
+                "trajectory_file": name,
+                "status": "present" if path.is_file() and path.stat().st_size > 0 else "missing",
+                "case_status": row.status,
+            }
+        )
+    payload = {
+        "evaluation_run_id": evaluation_run_id,
+        "trajectory_schema_version": TRAJECTORY_SCHEMA_VERSION,
+        "created_at": created_at.astimezone(UTC).isoformat().replace("+00:00", "Z"),
+        "git_commit": git_commit,
+        "selection_policy": selection_policy,
+        "origin_planning": origin_planning,
+        "case_list": case_list,
+        "cases": cases,
+    }
+    dest = traj_root / "manifest.json"
+    dest.write_text(json.dumps(payload, indent=2, allow_nan=False) + "\n", encoding="utf-8")
+    return dest
+
+
 def _review_required(state: object) -> bool:
     review = bool(getattr(state, "review_required", False))
     status = getattr(state, "status", None)
@@ -295,15 +403,51 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Run ForecastWize agent evaluation.")
     parser.add_argument("--output-json", type=Path, default=DEFAULT_JSON)
     parser.add_argument("--output-md", type=Path, default=DEFAULT_MD)
+    parser.add_argument(
+        "--origin-planning",
+        choices=["shared", "model_specific"],
+        default=None,
+        help=(
+            "Omit for the official EXP-010 path. "
+            "model_specific without --selection-policy reproduces EXP-009 "
+            "(planner only, no veto). shared is historical EXP-008 parity "
+            "when combined with --selection-policy default."
+        ),
+    )
+    parser.add_argument(
+        "--selection-policy",
+        choices=["default", "exp010"],
+        default=None,
+        help=(
+            "Official default is exp010 (model-specific origins plus the "
+            "frozen last/earlier WIS veto). default = historical shared-origin "
+            "parity, or EXP-009 when combined with --origin-planning "
+            "model_specific."
+        ),
+    )
     args = parser.parse_args()
+    origin_planning = args.origin_planning
+    selection_policy = args.selection_policy
+    if selection_policy is None and origin_planning == "model_specific":
+        selection_policy = "default"
+    elif selection_policy is None:
+        selection_policy = DEFAULT_SELECTION_POLICY
+    if origin_planning is None:
+        origin_planning = DEFAULT_ORIGIN_PLANNING
     warnings.filterwarnings("ignore", category=UserWarning)
-    result = run_agent_evaluation(output_json=args.output_json, output_md=args.output_md)
+    result = run_agent_evaluation(
+        output_json=args.output_json,
+        output_md=args.output_md,
+        origin_planning=origin_planning,
+        selection_policy=selection_policy,
+    )
     print(f"wrote {args.output_json}")
     print(f"wrote {args.output_md}")
     print(f"case_list={result.case_list}")
     print(f"official_wis={result.aggregate.wis}")
     print(f"n_failed={result.aggregate.n_cases_failed}")
     print(f"human_intervention_count={result.aggregate.human_intervention_count}")
+    print(f"trajectories={DEFAULT_TRAJECTORY_ROOT / result.evaluation_run_id}")
     return 0
 
 

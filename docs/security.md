@@ -115,7 +115,10 @@ claim features that are not in the repo.
 - **CPU-heavy evaluation/forecast jobs** can still load a core; the inflight cap only limits how many run at once.
 - **Multipart without a trustworthy Content-Length** is rejected; clients that use chunked encoding without Content-Length cannot upload until that is supported.
 - Uploaded series values appear in **API dataset/forecast JSON** for the operator UI. That is intentional. They are not sent to an LLM provider today.
-- Catalog evaluation does **not** upload series to a third party. Default `persist_trajectory=False` still keeps holdout out of the graph (`holdout_passed_to_graph`: false).
+- Catalog evaluation does **not** upload series to a third party. Persist is
+  observational and still keeps holdout out of the graph
+  (`holdout_passed_to_graph`: false). Trajectories redact secrets and omit
+  raw series.
 
 ## Third-party APIs
 

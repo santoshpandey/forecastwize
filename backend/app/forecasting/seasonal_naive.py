@@ -19,6 +19,18 @@ from app.forecasting._support import (
 from app.forecasting.base import ForecastInterfaceError, ForecastModel, ModelMetadata
 
 
+def seasonal_naive_minimum_train_size(*, frequency: str, seasonal_period: int | None) -> int:
+    """Same period rule as ``SeasonalNaiveModel.fit``. Authoritative length check."""
+    period = seasonal_period if seasonal_period is not None else period_from_frequency(frequency)
+    if period is None or period < 2:
+        msg = (
+            "Seasonal naive needs seasonal_period>=2 or a frequency with a known "
+            "period (D→7, h→24, MS/ME→12, W*→52)."
+        )
+        raise ForecastInterfaceError(msg)
+    return int(period)
+
+
 class SeasonalNaiveModel(ForecastModel):
     """ŷ_{T+h} = y_{T+h-m}. Period is constructor arg or inferred from frequency."""
 
@@ -41,19 +53,13 @@ class SeasonalNaiveModel(ForecastModel):
         seed: int | None = None,
     ) -> Self:
         index, y = copy_training(timestamps, values, frequency=frequency)
-        if self._period_arg is not None:
-            period = self._period_arg
-        else:
-            period = period_from_frequency(frequency)
-        if period is None or period < 2:
-            msg = (
-                "Seasonal naive needs seasonal_period>=2 or a frequency with a known "
-                "period (D→7, h→24, MS/ME→12, W*→52)."
-            )
+        needed = seasonal_naive_minimum_train_size(
+            frequency=frequency, seasonal_period=self._period_arg
+        )
+        if y.size < needed:
+            msg = f"Seasonal naive needs at least {needed} observations; got {y.size}."
             raise ForecastInterfaceError(msg)
-        if y.size < period:
-            msg = f"Seasonal naive needs at least {period} observations; got {y.size}."
-            raise ForecastInterfaceError(msg)
+        period = needed
         self._period = int(period)
         self._index = index
         self._y = y
@@ -81,6 +87,11 @@ class SeasonalNaiveModel(ForecastModel):
     ) -> tuple[np.ndarray, np.ndarray]:
         yhat = self.predict(horizon=horizon)
         return seasonal_naive_intervals(yhat, self._sigma, coverage, self._period)
+
+    def minimum_train_size(self, *, frequency: str) -> int:
+        return seasonal_naive_minimum_train_size(
+            frequency=frequency, seasonal_period=self._period_arg
+        )
 
     def metadata(self) -> ModelMetadata:
         require_fitted(self._fitted, "SeasonalNaiveModel")

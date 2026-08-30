@@ -62,6 +62,9 @@ and point at the shared harness. Do not invent scores.
 | [EXP-INITIAL-COMPARISON](EXP-INITIAL-COMPARISON.md) | First complete catalog benchmark | final | Frozen control — `evaluation/artifacts/exp-initial-comparison/` |
 | [EXP-006](EXP-006-missing-policy.md) | Train-only missing-value policy | iteration | Yes — `evaluation/artifacts/EXP-006-missing-policy/` |
 | [EXP-007](EXP-007-retry-backtest-wis.md) | Retry only if backtest WIS improves | iteration | Yes — `evaluation/artifacts/EXP-007-retry-backtest-wis/` |
-| [EXP-008](EXP-008-full-candidates.md) | Backtest full baseline candidate set | iteration | Yes — `evaluation/artifacts/EXP-008-full-candidates/` (copied to `evaluation/results/`) |
+| [EXP-008](EXP-008-full-candidates.md) | Backtest full baseline candidate set | iteration | Yes — `evaluation/artifacts/EXP-008-full-candidates/` (previous official; also `pre-exp010-promotion/`) |
+| [EXP-009](EXP-009-ets-arima-min-train.md) | Model-specific ETS/ARIMA min-train origins | removed (failed WIS) | Yes — `evaluation/artifacts/EXP-009-ets-arima-min-train/` (`--origin-planning model_specific`) |
+| [EXP-010](EXP-010-robust-model-selection.md) | Robust model selection (planner + last/earlier veto) | final | Yes — `evaluation/artifacts/EXP-010-robust-model-selection/` (promoted to `evaluation/results/`) |
+| [EXP-010 promotion](EXP-010-PROMOTION.md) | Controlled promotion of EXP-010 | final | Official pair `comparison-20260830T020453Z` |
 
 The running summary is [docs/changelog.md](../docs/changelog.md).

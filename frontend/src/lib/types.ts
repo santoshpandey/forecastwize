@@ -103,6 +103,7 @@ export type HumanCheckpoint = {
   }[];
   source_data_unmodified: boolean;
   decision_note: string | null;
+  checkpoint_id?: string | null;
 };
 
 export type CandidateRow = {

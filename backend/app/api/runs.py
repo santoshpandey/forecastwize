@@ -256,7 +256,10 @@ def decide_run_checkpoint(
     record.human_checkpoint = _checkpoint_view(decision.checkpoint)
     if decision.run_status == "completed":
         record.finished_at = utc_now()
-    persist_trajectory_step(store.trajectory_path(run_id), decision.trajectory_step)
+    traj_path = store.trajectory_path(run_id)
+    persist_trajectory_step(traj_path, decision.trajectory_step)
+    if decision.continuation_step is not None:
+        persist_trajectory_step(traj_path, decision.continuation_step)
     record.trajectory_available = True
     csv_after = store.dataset_csv_path(record.dataset_id).read_bytes()
     if csv_before != csv_after:
@@ -314,6 +317,14 @@ def _parse_trajectory_line(raw: str, run_id: str) -> TrajectoryStepView | None:
             next_step=payload.get("next_step"),
             error=payload.get("error"),
             final_result=payload.get("final_result"),
+            event_id=payload.get("event_id") if isinstance(payload.get("event_id"), str) else None,
+            event_type=(
+                payload.get("event_type") if isinstance(payload.get("event_type"), str) else None
+            ),
+            actor=payload.get("actor") if isinstance(payload.get("actor"), str) else None,
+            case_id=payload.get("case_id") if isinstance(payload.get("case_id"), str) else None,
+            sequence=payload.get("sequence") if isinstance(payload.get("sequence"), int) else None,
+            payload=payload.get("payload") if isinstance(payload.get("payload"), dict) else None,
         )
     except (TypeError, ValueError):
         logger.warning(

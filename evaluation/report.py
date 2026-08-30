@@ -25,6 +25,16 @@ class BacktestModelSnapshot(BaseModel):
     n_folds_completed: int
     n_folds_failed: int
     rank: int | None
+    min_train_size: int | None = None
+    eligible: bool | None = None
+    rejection_reason: str | None = None
+    fold_train_sizes: list[int] = Field(default_factory=list)
+    fold_wis: list[float | None] = Field(default_factory=list)
+    n_origins_skipped_insufficient_train: int | None = None
+    vetoed: bool | None = None
+    veto_reason: str | None = None
+    selectable: bool | None = None
+    recent_vs_earlier_ratio: float | None = None
 
 
 class CaseEvaluation(BaseModel):

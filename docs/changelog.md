@@ -8,11 +8,11 @@ detail lives in [architecture.md](architecture.md) and
 
 | Item | Statement | Artifact |
 |---|---|---|
-| Official WIS vs baseline | `relative_improvement` **0.0** (parity, not a win) | `evaluation/results/comparison.json` (`comparison-20260829T125254Z`) |
-| **Biggest improvement** | Case **003** WIS relative **-5.145…** → **0.0** after retry-only-if-better-WIS; EXP-006 made official WIS non-null | EXP-006 `comparison-20260829T124600Z`; EXP-007 `comparison-20260829T125037Z` |
-| **Biggest failure** | No official WIS win; agent `human_intervention_count` **12** vs baseline **0** | same official `comparison.json` `aggregate.human_intervention_count` |
-| **Removed experiment** | **None** | this file, section below |
-| **Main engineering lesson** | Do not execute a hypothesis shortlist or retry to a worse official backtest WIS; use a named train-only missing policy | EXP-006–008 records |
+| Official WIS vs baseline | `relative_improvement` **0.13264925035654543** (~13.26%) | `evaluation/results/comparison.json` (`comparison-20260830T030644Z`) |
+| **Biggest improvement** | Official catalog WIS **13.26%**; largest per-case holdout gain **001** (ARIMA) | official `comparison.json`; EXP-010 isolate `comparison-20260830T014245Z` |
+| **Biggest failure** | Case **012** still loses holdout WIS (naive 3.114 vs baseline SN 1.378); 12 checkpoints opened, 0 human decisions | same official `comparison.json` case 012 |
+| **Removed experiment** | EXP-009 model-specific origins without veto (WIS −1.662); catastrophic 012 ETS | `evaluation/artifacts/EXP-009-ets-arima-min-train/` |
+| **Main engineering lesson** | Official mean WIS can hide a collapsing last fold; gate unstable candidates, do not blend or hard-code a model | EXP-009 failed; EXP-010 promoted |
 
 **Kinds** used below:
 
@@ -30,6 +30,36 @@ Same methodology whenever possible: `python evaluation/run_baseline.py`,
 
 ---
 
+## Human-in-the-loop demo (not a WIS experiment)
+
+- **Kind:** iteration (interactive checkpoint only)
+- **Record:** [docs/human-in-the-loop-demo.md](human-in-the-loop-demo.md)
+- **Artifact:** `evaluation/artifacts/human-demo/run_f4c8529410f148e8a6f4973abf3440ee/`
+  (not `evaluation/results/`)
+- One real interactive run records `HUMAN_CHECKPOINT_CREATED` and, after a
+  human Accept / Reject / Review, one `HUMAN_DECISION`. Official catalog
+  remains **12 checkpoints opened, 0 human decisions**. EXP-010 and official
+  WIS are unchanged.
+
+---
+
+## Trajectory observability (not a WIS experiment)
+
+- **Kind:** iteration (observability only)
+- **Record:** [docs/trajectory-evidence.md](trajectory-evidence.md),
+  [experiments/EXP-TRAJECTORY-AUDIT.md](../experiments/EXP-TRAJECTORY-AUDIT.md)
+- **Command:** `python evaluation/run_agent.py`
+- **Artifact:** `evaluation/results/trajectories/agent-20260830T030413Z/`
+- Official catalog persist is now on by default. Child agents append to the
+  same per-case JSONL. WIS, selected models, verification, and retries were
+  unchanged vs the pre-persist EXP-010 pair
+  (`comparison-20260830T020453Z` → `comparison-20260830T030644Z`, same
+  headline WIS **0.13264925035654543**).
+- Evaluation `human_intervention_count` remains **12 open checkpoints**, not
+  12 human decisions. No `HUMAN_DECISION` events were fabricated.
+
+---
+
 ## Baseline
 
 ### EXP-001 Conventional baseline harness
@@ -39,8 +69,10 @@ Same methodology whenever possible: `python evaluation/run_baseline.py`,
 - **Command:** `python evaluation/run_baseline.py`
 - **Artifact:** `evaluation/results/baseline.json`
 - **evaluation_run_id:** `baseline-20260829T071344Z` (later overwritten).
-  Current `evaluation/results/baseline.json` is `baseline-20260829T125209Z`
-  (EXP-008 copy). Frozen first catalog pair:
+  The EXP-008 official copy (`baseline-20260829T125209Z`) is archived at
+  `evaluation/artifacts/pre-exp010-promotion/`. Current official
+  `evaluation/results/baseline.json` is `baseline-20260830T020244Z`
+  (EXP-010 promotion). Frozen first catalog pair:
   `evaluation/artifacts/exp-initial-comparison/`.
 
 The first complete catalog run had **null** official WIS (case **005**
@@ -144,7 +176,8 @@ improved vs EXP-006; vs baseline `relative_improvement` was still negative
 - **Kind:** iteration
 - **Record:** [experiments/EXP-008-full-candidates.md](../experiments/EXP-008-full-candidates.md)
 - **Isolated eval:** `evaluation/artifacts/EXP-008-full-candidates/`
-  (`comparison-20260829T125254Z`); copied to `evaluation/results/`
+  (`comparison-20260829T125254Z`); then copied to `evaluation/results/`
+  (those official files were later overwritten by EXP-010)
 - **What changed:** BACKTEST executes the allow-list (`BASELINE_MODEL_IDS`);
   strategy shortlist remains a hypothesis.
 
@@ -152,22 +185,65 @@ improved vs EXP-006; vs baseline `relative_improvement` was still negative
 (`relative_improvement` **0.0**). Not a win. Cases 009/010 matched baseline
 `seasonal_naive`.
 
+### EXP-010 Robust model selection (planner + last/earlier veto)
+
+- **Kind:** iteration
+- **Record:** [experiments/EXP-010-robust-model-selection.md](../experiments/EXP-010-robust-model-selection.md)
+- **Isolated eval:** `evaluation/artifacts/EXP-010-robust-model-selection/`
+  (`baseline-20260830T014058Z` / `agent-20260830T014147Z` /
+  `comparison-20260830T014245Z`)
+- **What changed:** `--selection-policy exp010` uses model-specific origins
+  plus a frozen last/earlier fold-WIS veto (`R=5`). Ranking stays official
+  backtest WIS among models that pass. After the isolated run succeeded,
+  this became the official advanced default.
+
+**Headline:** official WIS baseline **0.9153325914744158** vs agent
+**0.7939144093884205**, `relative_improvement` **0.13264925035654543**.
+All 12 cases; `n_cases_failed` 0. Agent won **8**, lost **2**, tied **2**.
+Case **012** selected naive (ETS / seasonal_naive / ARIMA vetoed); holdout
+WIS 3.114 vs EXP-009 ETS 22.83 — still worse than baseline SN 1.378.
+
+**Decision:** **Promote** to the official advanced solution. See
+[EXP-010-PROMOTION.md](../experiments/EXP-010-PROMOTION.md). Do not retune
+`R`. Do not start EXP-011.
+
 ---
 
 ## Removed experiment
 
-**None.** No approach was evaluated and then withdrawn. This section stays
-so later removals are not deleted from history.
+### EXP-009 Model-specific ETS/ARIMA backtest origins (removed from default path)
+
+- **Kind:** removed experiment
+- **Record:** [experiments/EXP-009-ets-arima-min-train.md](../experiments/EXP-009-ets-arima-min-train.md)
+- **Isolated eval:** `evaluation/artifacts/EXP-009-ets-arima-min-train/`
+  (`baseline-20260829T154533Z` / `agent-20260829T154616Z` /
+  `comparison-20260829T154706Z`)
+- **What changed:** Agent `evaluate_candidates` planned expanding origins per
+  model using `ForecastModel.minimum_train_size`. Baseline still uses shared
+  `run_rolling_origin_backtest`. Selection remained official backtest WIS.
+
+**Headline:** official WIS baseline **0.91533** vs agent **2.43703**,
+`relative_improvement` **−1.662**. All 12 cases evaluated; `n_cases_failed` 0.
+Agent won **8** cases, lost **2**, tied **2**. Case **012** ETS holdout WIS
+**22.83** vs **1.38** dominates the mean.
+
+**Decision:** **Remove from the default advanced path.** Do not describe
+EXP-009 as successful. Code remains as an explicit historical opt-in
+(`python evaluation/run_agent.py --origin-planning model_specific`, or
+`--origin-planning model_specific --selection-policy default`) so the
+isolated pair can be reproduced. Official advanced is EXP-010, not EXP-009.
+Do not treat per-case ARIMA wins as a catalog success.
 
 ---
 
 ## Final solution
 
-### Current official pair (EXP-008 copy)
+### Current official pair (promoted EXP-010)
 
 - **Kind:** final solution
-- **Record:** [experiments/EXP-008-full-candidates.md](../experiments/EXP-008-full-candidates.md)
-- **Commands:**
+- **Record:** [experiments/EXP-010-robust-model-selection.md](../experiments/EXP-010-robust-model-selection.md),
+  [EXP-010-PROMOTION.md](../experiments/EXP-010-PROMOTION.md)
+- **Commands** (no experimental flag required):
 
 ```powershell
 python evaluation/run_baseline.py
@@ -176,18 +252,38 @@ python evaluation/compare.py
 ```
 
 - **Artifacts (current `evaluation/results/`):**
-  - `baseline.json` (`baseline-20260829T125209Z`)
-  - `agent.json` (`agent-20260829T125231Z`)
-  - `comparison.json` (`comparison-20260829T125254Z`)
+  - `baseline.json` (`baseline-20260830T020244Z`)
+  - `agent.json` (`agent-20260830T030413Z`; same WIS as `agent-20260830T020331Z`)
+  - `comparison.json` (`comparison-20260830T030644Z`)
+  - trajectories: `evaluation/results/trajectories/agent-20260830T030413Z/`
 - **case_list:** 001–012, identical (`case_lists_identical` true)
+- Previous official EXP-008 pair archived at
+  `evaluation/artifacts/pre-exp010-promotion/`
 
-Official aggregate WIS `relative_improvement` is **0.0** (parity). Advanced
-did **not** beat baseline on WIS for any case. `n_cases_failed` is 0.
-Human interventions: **12** (agent, every case WARNs) vs **0** (baseline).
-Do not report this as a WIS win.
+Official aggregate WIS: baseline **0.9153325914744158**, advanced
+**0.7939144093884205**, `relative_improvement` **0.13264925035654543**
+(~13.26%). Holdout outcomes: **8** advanced wins, **2** baseline wins,
+**2** ties. `n_cases_failed` is 0. Automated evaluation opened **12**
+checkpoints and recorded **0** human decisions (`human_intervention_count`
+counts checkpoints opened).
 
-**Decision:** keep EXP-006+007+008. **Do not** claim an official WIS
-improvement.
+**Evolution (do not rewrite):** EXP-008 produced shared-origin **parity**.
+EXP-009 allowed stronger models to compete and **failed** on case 012
+(ETS holdout WIS ~22.83). EXP-010 kept the planner, added the instability
+veto, and became official after the measured WIS win.
+
+**Decision:** keep EXP-006+007+008+010. Official advanced is EXP-010.
+**Do not** start EXP-011 or retune `R`.
+
+### Previous official pair (EXP-008; superseded files)
+
+- **Kind:** final solution (superseded **files**; record kept)
+- **Record:** [experiments/EXP-008-full-candidates.md](../experiments/EXP-008-full-candidates.md)
+- **Archived files:** `evaluation/artifacts/pre-exp010-promotion/` and
+  `evaluation/artifacts/EXP-008-full-candidates/`
+  (`baseline-20260829T125209Z` / `agent-20260829T125231Z` /
+  `comparison-20260829T125254Z`)
+- Official aggregate WIS `relative_improvement` was **0.0** (parity).
 
 ### EXP-INITIAL-COMPARISON First complete catalog benchmark
 
@@ -210,10 +306,11 @@ improvement.
 
 ## Standing limitation (not a removed experiment)
 
-Verifier **WARN** still requires a human checkpoint on every completed
-evaluation case (`human_intervention_count` 12). That is not an official
-WIS failure. Case **005** completes under the named train-only missing
-policy (EXP-006); it no longer nulls official WIS.
+Verifier **WARN** still opens a human checkpoint on every completed
+evaluation case (`human_intervention_count` 12 = checkpoints opened, not
+human decisions). That is not an official WIS failure. Case **012** still loses holdout WIS after EXP-010. Case
+**005** completes under the named train-only missing policy (EXP-006); it
+no longer nulls official WIS.
 
 **Main engineering lesson:** execute the same candidate set and metric code
 as the baseline; retry only on strictly better official backtest WIS; fill

@@ -22,6 +22,17 @@ from app.forecasting.seasonal_naive import SeasonalNaiveModel
 BASELINE_MODEL_IDS = ("naive", "seasonal_naive", "ets", "arima")
 
 
+def minimum_train_size_for(
+    model_id: str,
+    *,
+    frequency: str,
+    seasonal_period: int | None = None,
+) -> int:
+    """Ask the named model for its ``fit`` minimum. Does not select or forecast."""
+    model = create_baseline_model(model_id, seasonal_period=seasonal_period)
+    return model.minimum_train_size(frequency=frequency)
+
+
 def create_baseline_model(
     model_id: str,
     *,

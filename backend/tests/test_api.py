@@ -147,6 +147,7 @@ def _stub_waiting_orchestrator(timestamps, values, **kwargs):  # type: ignore[no
             evidence_ids=["E1"],
             triggers=["verification_failed_repeatedly"],
             source_data_unmodified=True,
+            checkpoint_id=f"ckpt-{run_id}",
         ),
     )
 
@@ -456,6 +457,7 @@ def test_checkpoint_accept_and_reject_paths(
     assert body["accepted"] is True
     assert body["human_checkpoint"]["status"] == "approved"
     assert body["human_checkpoint"]["source_data_unmodified"] is True
+    assert body["human_checkpoint"]["checkpoint_id"] == f"ckpt-{run_id}"
     after_accept = api_client.get(f"/datasets/{dataset_id}")
     assert after_accept.json()["n_rows"] == csv_before
     traj = api_client.get(f"/runs/{run_id}/trajectory").json()["steps"]
@@ -463,6 +465,13 @@ def test_checkpoint_accept_and_reject_paths(
     assert human
     assert human[-1]["decision"]["action"] == "accept"
     assert human[-1]["decision"]["transforms_applied"] is False
+    assert human[-1]["event_type"] == "HUMAN_DECISION"
+    assert human[-1]["payload"]["checkpoint_id"] == f"ckpt-{run_id}"
+    assert human[-1]["payload"]["decision"] == "accept"
+    completed = [step for step in traj if step.get("event_type") == "RUN_COMPLETED"]
+    assert completed
+    assert completed[-1]["payload"]["continuation_of"] == "HUMAN_DECISION"
+    assert completed[-1]["payload"]["checkpoint_id"] == f"ckpt-{run_id}"
 
     blocked = api_client.post(f"/runs/{run_id}/checkpoint", json={"action": "reject"})
     assert blocked.status_code == 409
@@ -588,7 +597,10 @@ def test_evaluation_dashboard_serves_committed_comparison_json(
     file_wis = expected.per_case[2].metrics["wis"].relative_improvement
     api_wis = comparison["per_case"][2]["metrics"]["wis"]["relative_improvement"]
     assert api_wis == file_wis
-    assert comparison["aggregate"]["metrics"]["wis"]["relative_improvement"] is None
+    assert (
+        comparison["aggregate"]["metrics"]["wis"]["relative_improvement"]
+        == expected.aggregate.metrics["wis"].relative_improvement
+    )
     catalog = {row["case_id"]: row for row in body["catalog"]}
     assert catalog["012"]["challenging"] is True
 
@@ -629,3 +641,26 @@ def test_sanitize_rejects_non_csv() -> None:
 
     with pytest.raises(ApiError):
         sanitize_upload_filename("notes.txt")
+
+
+def test_candidate_row_view_accepts_exp010_fields() -> None:
+    from app.api.schemas import CandidateRowView
+    from app.tools.forecasting_tools import CandidateEvalRow
+
+    row = CandidateEvalRow(
+        model_id="naive",
+        official_wis=1.0,
+        wis_completed_only=1.0,
+        n_folds_planned=5,
+        n_folds_completed=5,
+        n_folds_failed=0,
+        rank=1,
+        min_train_size=14,
+        eligible=True,
+        selectable=True,
+        vetoed=False,
+    )
+    view = CandidateRowView.model_validate(row.model_dump())
+    assert view.model_id == "naive"
+    assert view.eligible is True
+    assert view.selectable is True

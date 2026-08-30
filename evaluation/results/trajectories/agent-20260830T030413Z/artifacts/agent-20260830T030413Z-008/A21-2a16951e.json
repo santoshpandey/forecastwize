@@ -1,0 +1,1 @@
+{"error_message":null,"error_type":null,"ok":true,"payload":{"model_ids":["naive","seasonal_naive","ets","arima"],"summary":"Supported baseline model_ids: naive, seasonal_naive, ets, arima"}}

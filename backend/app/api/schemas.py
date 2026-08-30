@@ -181,6 +181,7 @@ class HumanCheckpointView(BaseModel):
     proposed_transforms: list[ProposedTransformView] = Field(default_factory=list)
     source_data_unmodified: bool = True
     decision_note: str | None = None
+    checkpoint_id: str | None = None
 
 
 class CheckpointDecisionRequest(BaseModel):
@@ -237,6 +238,8 @@ class RunResponse(BaseModel):
 
 
 class CandidateRowView(BaseModel):
+    """Public backtest row. Extra EXP-010 fields are optional; no forecast math."""
+
     model_config = ConfigDict(extra="forbid")
 
     model_id: str
@@ -247,6 +250,23 @@ class CandidateRowView(BaseModel):
     n_folds_failed: int
     rank: int | None
     error_message: str | None = None
+    min_train_size: int | None = None
+    fold_train_sizes: list[int] = Field(default_factory=list)
+    fold_wis: list[float | None] = Field(default_factory=list)
+    n_origins_skipped_insufficient_train: int = 0
+    skipped_origin_indices: list[int] = Field(default_factory=list)
+    n_valid_origins: int | None = None
+    n_valid_origins_not_selected: int | None = None
+    target_folds_requested: int | None = None
+    target_folds_achieved: bool | None = None
+    eligible: bool | None = None
+    rejection_reason: str | None = None
+    vetoed: bool | None = None
+    veto_reason: str | None = None
+    selectable: bool | None = None
+    recent_fold_mean_wis: float | None = None
+    earlier_fold_mean_wis: float | None = None
+    recent_vs_earlier_ratio: float | None = None
 
 
 class VerificationCheckView(BaseModel):
@@ -291,6 +311,12 @@ class TrajectoryStepView(BaseModel):
     next_step: str | None = None
     error: dict[str, object] | None = None
     final_result: dict[str, object] | None = None
+    event_id: str | None = None
+    event_type: str | None = None
+    actor: str | None = None
+    case_id: str | None = None
+    sequence: int | None = None
+    payload: dict[str, object] | None = None
 
     @field_serializer("timestamp")
     def serialize_ts(self, value: datetime) -> str:

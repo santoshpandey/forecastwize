@@ -81,7 +81,7 @@ def run_evaluation_job(
     return run_agent_evaluation(
         output_json=output_json,
         output_md=output_md,
-        persist_trajectory=False,
+        persist_trajectory=True,
     )
 
 

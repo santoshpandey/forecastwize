@@ -30,7 +30,15 @@ from app.forecasting.metrics import (
 
 WindowType = Literal["expanding", "rolling"]
 FoldStatus = Literal["completed", "failed"]
+OriginPlanning = Literal["shared", "model_specific"]
+SkipReason = Literal["insufficient_train"]
 ModelFactory = Callable[[], ForecastModel]
+
+DEFAULT_TARGET_BACKTEST_FOLDS = 5
+# Official advanced path (pre-EXP-009). Model-specific origins remain available
+# as an explicit opt-in so EXP-009 can be reproduced without being the default.
+DEFAULT_ORIGIN_PLANNING: OriginPlanning = "shared"
+EXP009_ORIGIN_PLANNING: OriginPlanning = "model_specific"
 
 
 def _to_utc_iso(value: datetime) -> str:
@@ -78,6 +86,36 @@ class BacktestFoldPlan(BaseModel):
     @property
     def horizon(self) -> int:
         return self.test_end_index - self.test_start_index + 1
+
+
+class SkippedOrigin(BaseModel):
+    """An expanding origin that was not planned. Not a failed model execution."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    origin_index: int
+    n_train: int
+    min_train_size: int
+    reason: SkipReason
+
+
+class ModelOriginPlan(BaseModel):
+    """Per-model expanding-origin plan. Used only by model-specific backtests."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    model_id: str
+    min_train_size: int
+    n_folds_requested: int
+    n_folds_planned: int
+    n_valid_origins: int
+    n_valid_origins_not_selected: int
+    target_folds_achieved: bool
+    eligible: bool
+    ineligibility_reason: str | None = None
+    folds_planned: list[BacktestFoldPlan]
+    skipped_origins: list[SkippedOrigin]
+    fold_train_sizes: list[int]
 
 
 class FoldMetrics(BaseModel):
@@ -223,7 +261,7 @@ class BacktestSpec(BaseModel):
 
 
 class BacktestComparison(BaseModel):
-    """Same splits for every model. Ranking is evidence, not an emitted forecast."""
+    """Same splits for every model when ``origin_planning='shared'``. Ranking is evidence."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -235,6 +273,9 @@ class BacktestComparison(BaseModel):
     ranking: list[ModelRankingRow]
     generated_at: datetime
     configuration: dict[str, ConfigValue]
+    origin_planning: OriginPlanning = "shared"
+    target_folds: int | None = None
+    model_origin_plans: list[ModelOriginPlan] = Field(default_factory=list)
 
     @field_serializer("generated_at")
     def serialize_generated_at(self, value: datetime) -> str:
@@ -332,7 +373,224 @@ def run_rolling_origin_backtest(
             "seed": spec.seed,
             "seasonality_period": spec.seasonality_period,
             "selection": "none_comparison_only",
+            "origin_planning": "shared",
         },
+        origin_planning="shared",
+        target_folds=None,
+        model_origin_plans=[],
+    )
+
+
+def run_model_specific_origin_backtest(
+    timestamps: pd.Series | pd.DatetimeIndex,
+    values: pd.Series | np.ndarray,
+    models: Sequence[tuple[str, ModelFactory]],
+    spec: BacktestSpec,
+    *,
+    target_folds: int = DEFAULT_TARGET_BACKTEST_FOLDS,
+    generated_at: datetime | None = None,
+) -> BacktestComparison:
+    """Expanding-origin backtest with per-model first origins.
+
+    Skipped short origins are planning decisions, not failed folds. A planned
+    fold that still fails keeps official WIS undefined. Does not use holdout
+    beyond the series passed in. Does not select a production model.
+
+    Baseline evaluation must keep calling ``run_rolling_origin_backtest``.
+    """
+    if spec.window_type != "expanding":
+        msg = "model-specific origin planning supports expanding windows only"
+        raise ForecastInterfaceError(msg)
+    if target_folds < 1:
+        msg = "target_folds must be >= 1"
+        raise ForecastInterfaceError(msg)
+    index, y = _copy_backtest_inputs(timestamps, values, frequency=spec.frequency)
+    n = int(index.size)
+    factories = _validate_models(models)
+    created = generated_at if generated_at is not None else datetime.now(UTC)
+    times = _as_datetime_list(index)
+
+    origin_plans: list[ModelOriginPlan] = []
+    results: list[ModelBacktestResult] = []
+    for model_id, factory in factories:
+        probe = factory()
+        try:
+            min_train = probe.minimum_train_size(frequency=spec.frequency)
+        except ForecastInterfaceError:
+            origin_plan = ModelOriginPlan(
+                model_id=model_id,
+                min_train_size=0,
+                n_folds_requested=target_folds,
+                n_folds_planned=0,
+                n_valid_origins=0,
+                n_valid_origins_not_selected=0,
+                target_folds_achieved=False,
+                eligible=False,
+                ineligibility_reason="insufficient_history",
+                folds_planned=[],
+                skipped_origins=[],
+                fold_train_sizes=[],
+            )
+            origin_plans.append(origin_plan)
+            results.append(
+                ModelBacktestResult(
+                    model_id=model_id,
+                    folds=[],
+                    aggregate=_aggregate_folds([], n_planned=0),
+                    last_completed_metadata=None,
+                )
+            )
+            continue
+        origin_plan = _plan_model_specific_expanding(
+            n_observations=n,
+            horizon=spec.horizon,
+            min_train_size=min_train,
+            target_folds=target_folds,
+            model_id=model_id,
+        )
+        origin_plans.append(origin_plan)
+        fold_rows: list[BacktestFoldResult] = []
+        last_meta: ModelMetadata | None = None
+        for plan in origin_plan.folds_planned:
+            row = _run_one_fold(
+                plan=plan,
+                index=index,
+                y=y,
+                times=times,
+                factory=factory,
+                spec=spec,
+            )
+            if row.status == "completed" and row.metadata is not None:
+                last_meta = row.metadata
+            fold_rows.append(row)
+        results.append(
+            ModelBacktestResult(
+                model_id=model_id,
+                folds=fold_rows,
+                aggregate=_aggregate_folds(fold_rows, n_planned=len(origin_plan.folds_planned)),
+                last_completed_metadata=last_meta,
+            )
+        )
+
+    ranking = _rank_by_official_wis(results)
+    return BacktestComparison(
+        spec=spec,
+        n_observations=n,
+        model_ids=[item[0] for item in factories],
+        folds_planned=[],
+        results=results,
+        ranking=ranking,
+        generated_at=created,
+        configuration={
+            "window_type": spec.window_type,
+            "horizon": spec.horizon,
+            "min_train_size": spec.min_train_size,
+            "rolling_window_size": spec.rolling_window_size,
+            "step": spec.step,
+            "coverage": spec.coverage,
+            "seed": spec.seed,
+            "seasonality_period": spec.seasonality_period,
+            "selection": "none_comparison_only",
+            "origin_planning": "model_specific",
+            "target_folds": target_folds,
+        },
+        origin_planning="model_specific",
+        target_folds=target_folds,
+        model_origin_plans=origin_plans,
+    )
+
+
+def expanding_origin_step(
+    n_observations: int,
+    *,
+    horizon: int,
+    min_train_size: int,
+    target_folds: int = DEFAULT_TARGET_BACKTEST_FOLDS,
+) -> int:
+    """Same step formula as the baseline harness, for one model's first origin."""
+    if target_folds < 1:
+        msg = "target_folds must be >= 1"
+        raise ValueError(msg)
+    last = n_observations - 1 - horizon
+    first = min_train_size - 1
+    if first > last:
+        return 1
+    n_possible = last - first + 1
+    return max(1, (n_possible + target_folds - 1) // target_folds)
+
+
+def _plan_model_specific_expanding(
+    *,
+    n_observations: int,
+    horizon: int,
+    min_train_size: int,
+    target_folds: int,
+    model_id: str,
+) -> ModelOriginPlan:
+    if n_observations < 1:
+        msg = "series is empty"
+        raise ForecastInterfaceError(msg)
+    last_origin = n_observations - 1 - horizon
+    skipped: list[SkippedOrigin] = []
+    valid_origins: list[int] = []
+    if last_origin >= 0:
+        for origin in range(0, last_origin + 1):
+            n_train = origin + 1
+            if n_train < min_train_size:
+                skipped.append(
+                    SkippedOrigin(
+                        origin_index=origin,
+                        n_train=n_train,
+                        min_train_size=min_train_size,
+                        reason="insufficient_train",
+                    )
+                )
+            else:
+                valid_origins.append(origin)
+    step = expanding_origin_step(
+        n_observations,
+        horizon=horizon,
+        min_train_size=min_train_size,
+        target_folds=target_folds,
+    )
+    selected = valid_origins[::step]
+    plans: list[BacktestFoldPlan] = []
+    for fold_id, origin in enumerate(selected):
+        test_start = origin + 1
+        test_end = origin + horizon
+        plans.append(
+            BacktestFoldPlan(
+                fold_id=fold_id,
+                train_start_index=0,
+                train_end_index=origin,
+                test_start_index=test_start,
+                test_end_index=test_end,
+            )
+        )
+    n_planned = len(plans)
+    eligible = n_planned >= 1
+    ineligibility: str | None = None
+    if not eligible:
+        ineligibility = "insufficient_history"
+    n_not_selected = len(valid_origins) - n_planned
+    achieved = n_planned >= target_folds or (
+        len(valid_origins) < target_folds and n_planned == len(valid_origins) and n_planned >= 1
+    )
+    if not eligible:
+        achieved = False
+    return ModelOriginPlan(
+        model_id=model_id,
+        min_train_size=min_train_size,
+        n_folds_requested=target_folds,
+        n_folds_planned=n_planned,
+        n_valid_origins=len(valid_origins),
+        n_valid_origins_not_selected=n_not_selected,
+        target_folds_achieved=achieved,
+        eligible=eligible,
+        ineligibility_reason=ineligibility,
+        folds_planned=plans,
+        skipped_origins=skipped,
+        fold_train_sizes=[plan.n_train for plan in plans],
     )
 
 

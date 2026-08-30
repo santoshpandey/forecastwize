@@ -42,9 +42,14 @@ make compare
 ```
 
 Equivalent: `python evaluation/run_baseline.py`, `python evaluation/run_agent.py`,
-`python evaluation/compare.py`. GitHub Actions **Evaluation** is the same
-harnesses on demand (`.github/workflows/evaluation.yml`); it is not part of
-commit CI and does not use API keys.
+`python evaluation/compare.py`. `run_agent.py` also writes real per-case
+trajectories under `evaluation/results/trajectories/<evaluation_run_id>/`
+([trajectory-evidence.md](trajectory-evidence.md)). GitHub Actions **Evaluation**
+is the same harnesses on demand (`.github/workflows/evaluation.yml`); it is not
+part of commit CI and does not use API keys.
+
+Evaluation `human_intervention_count` is checkpoints opened, not human
+decisions.
 
 The harness loads **exactly** the registered cases, backtests on training rows
 only, scores holdout **WIS** (primary) plus sMAPE, WMAPE, MASE, coverage, and
@@ -55,7 +60,9 @@ comparison copies live under `evaluation/artifacts/EXP-*/` and
 `evaluation/artifacts/exp-initial-comparison/`.
 
 The agent harness (`python evaluation/run_agent.py`) uses the **same** case
-list, CSVs, splits, seeds, and metric functions. Comparison
+list, CSVs, splits, seeds, and metric functions. The official advanced
+configuration is promoted EXP-010 (`selection_policy=exp010`): model-specific
+valid origins plus the frozen last/earlier fold-WIS veto. Comparison
 (`python evaluation/compare.py`) writes `evaluation/results/comparison.json`
 with per-case and aggregate deltas computed from those files. Failed cases stay
 in the record. Improvement percentages are not hard-coded.
@@ -63,29 +70,36 @@ in the record. Improvement percentages are not hard-coded.
 ## Cited official pair
 
 Read `evaluation/results/comparison.json` (`comparison_id`
-`comparison-20260829T125254Z`; baseline `baseline-20260829T125209Z`; agent
-`agent-20260829T125231Z`; `case_lists_identical` true).
+`comparison-20260830T030644Z`; baseline `baseline-20260830T020244Z`; agent
+`agent-20260830T030413Z`; `case_lists_identical` true).
 
 | JSON field | Recorded value |
 |---|---|
-| `aggregate.metrics.wis.relative_improvement` | 0.0 |
-| `aggregate.n_cases_failed` (baseline / agent) | 0 / 0 |
-| `aggregate.human_intervention_count` | 0 / 12 |
+| `aggregate.metrics.wis.baseline` | 0.9153325914744158 |
+| `aggregate.metrics.wis.agent` | 0.7939144093884205 |
+| `aggregate.metrics.wis.relative_improvement` | 0.13264925035654543 (~13.26%) |
+| Holdout wins / losses / ties | 8 / 2 / 2 |
+| `aggregate.n_cases_failed` (baseline / agent) | 0 / 0 (all 12 cases) |
+| `aggregate.human_intervention_count` | 0 / 12 (checkpoints opened, not human decisions) |
 | `errors` | both empty |
 
-Do not paste a different improvement percentage. Isolated experiment copies:
+Do not paste a different improvement percentage. Do not claim a win on every
+case. Isolated experiment copies:
 `evaluation/artifacts/EXP-006-missing-policy/`,
-`EXP-007-retry-backtest-wis/`, `EXP-008-full-candidates/`, and the first
+`EXP-007-retry-backtest-wis/`, `EXP-008-full-candidates/`,
+`EXP-009-ets-arima-min-train/` (WIS failed),
+`EXP-010-robust-model-selection/` (frozen isolate of this official path),
+`pre-exp010-promotion/` (previous official EXP-008 pair), and the first
 catalog control `evaluation/artifacts/exp-initial-comparison/`.
 
-**Biggest improvement (experiments):** case 003 WIS `relative_improvement`
-from **-5.145124275946384** in EXP-006 comparison to **0.0** in EXP-007 (and
-the official pair). EXP-006 made official WIS non-null.
+**Biggest improvement (official pair):** catalog WIS **13.26%**; largest
+per-case holdout gain is **001**.
 
-**Biggest failure (official pair):** no WIS win vs baseline; 12 human
-interventions.
+**Biggest failure (official pair):** case **012** still loses holdout WIS
+(naive 3.114 vs baseline seasonal_naive 1.378). EXP-009 ETS was 22.83.
+Automated evaluation opened 12 checkpoints and recorded 0 human decisions.
 
-**Removed experiment:** none.
+**Removed experiment:** EXP-009 as the default (planner without veto).
 
-No further catalog layout work is **Planned**. Optional ML remains out of
-scope until a catalog pair shows WIS improvement.
+No further catalog layout work is **Planned**. Do not start EXP-011 in this
+promotion.

@@ -93,17 +93,23 @@ def test_run_baseline_seasonal_naive_explicitly() -> None:
 
 
 def test_no_evaluation_run_artifacts() -> None:
-    """Scratch eval copies are gitignored. Fail only if they are tracked."""
+    """Scratch eval copies are gitignored. Named experiment pairs may be tracked."""
     repo = Path(__file__).resolve().parents[2]
     tracked = subprocess.check_output(
         ["git", "ls-files", "evaluation/artifacts"],
         cwd=repo,
         text=True,
     )
+    allowed_prefixes = (
+        "evaluation/artifacts/.gitkeep",
+        "evaluation/artifacts/exp-initial-comparison/",
+        "evaluation/artifacts/EXP-",
+        "evaluation/artifacts/pre-exp010-promotion/",
+    )
     leftover = [
         line.strip()
         for line in tracked.splitlines()
-        if line.strip() and Path(line.strip()).name != ".gitkeep"
+        if line.strip() and not line.strip().startswith(allowed_prefixes)
     ]
     assert leftover == []
     data_eval = repo / "data" / "evaluation"

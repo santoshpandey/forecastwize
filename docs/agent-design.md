@@ -2,8 +2,12 @@
 
 ## Implemented
 
-- Deterministic `backtest` tool (`backend/app/tools/backtest_tools.py`) calling
-  `run_rolling_origin_backtest`. Unknown tool names and model ids are rejected.
+- Deterministic `backtest` tool (`backend/app/tools/backtest_tools.py`):
+  `origin_planning='shared'` calls `run_rolling_origin_backtest` (baseline
+  and historical EXP-008). Official advanced EXP-010 uses
+  `origin_planning='model_specific'` → `run_model_specific_origin_backtest`.
+  Bare `--origin-planning model_specific` still reproduces EXP-009 (no veto).
+  Unknown tool names and model ids are rejected.
 - Deterministic **data diagnostic tools** (`backend/app/tools/data_tools.py`):
   `inspect_series`, `diagnose_quality`, `diagnose_outliers`,
   `diagnose_rolling_anomalies`, `diagnose_trend`, `diagnose_seasonality`,
@@ -12,6 +16,10 @@
 - Deterministic **forecast evaluation** (`evaluate_candidates` /
   `list_supported_models` in `backend/app/tools/forecasting_tools.py`).
   Compact official WIS snapshots; no production yhat.
+- Deterministic **robustness analysis** (`analyze_backtest_robustness` in
+  `backend/app/tools/robustness_tools.py`): last/earlier fold-WIS veto
+  (`R=5`) when `selection_policy='exp010'` (official advanced default).
+  No holdout. No yhat. The LLM does not compute or apply the veto.
 - Deterministic **context inspection** (`inspect_context` in
   `backend/app/tools/context_tools.py`). Records optional event/context labels;
   does not invent events or infer causes.
@@ -21,8 +29,11 @@
   JSONL. Does not forecast, invent events, or modify data.
 - **Forecast Strategist** (`backend/app/agents/forecast_strategist.py`):
   inspects structured diagnostics, proposes candidates as hypotheses, requests
-  `evaluate_candidates`, and recommends `strategy_id` only from official
-  backtest WIS. No superiority claim without executed backtesting.
+  `evaluate_candidates`, and recommends `strategy_id` from official
+  backtest WIS among models that pass the EXP-010 instability veto
+  (official default). Historical shared-origin ranking remains
+  `selection_policy='default'`. No superiority claim without executed
+  backtesting. The strategist does not emit yhat.
 - **Context Analyst** (`backend/app/agents/context_analyst.py`): optional
   event/context labels (promotion, holiday, campaign, price change, stockout,
   product launch, external business event). Observed facts vs possible
@@ -64,15 +75,27 @@
   `backend/tests/fixtures/trajectories/`.
 
 Live API runs write `{run_id}.jsonl` under the file store (`data/api/` by
-default). Catalog `run_agent.py` defaults `persist_trajectory=False`.
+default). Official catalog `run_agent.py` defaults `persist_trajectory=True`
+and writes one JSONL per case under `evaluation/results/trajectories/`.
+Child agents append to that same file. See
+[docs/trajectory-evidence.md](trajectory-evidence.md).
+Evaluation `human_intervention_count` is checkpoints opened, not human
+decisions.
 
 ## Evaluation (do not invent scores)
 
-The graph is the advanced path in `python evaluation/run_agent.py`. Official
-WIS vs baseline is **only** `evaluation/results/comparison.json`. Cited pair:
-`comparison-20260829T125254Z`, `aggregate.metrics.wis.relative_improvement`
-**0.0**. WARN on every catalog case produces `human_intervention_count` 12.
-That is a secondary, not a WIS win.
+The graph is the advanced path in `python evaluation/run_agent.py` (official
+default `selection_policy='exp010'`). Official WIS vs baseline is **only**
+`evaluation/results/comparison.json`. Cited pair:
+`comparison-20260830T030644Z`, `aggregate.metrics.wis.relative_improvement`
+**0.13264925035654543** (~13.26%). Holdout outcomes: 8 advanced wins, 2
+baseline wins, 2 ties. EXP-009 isolated pair (`comparison-20260829T154706Z`)
+is **not** a WIS win (`relative_improvement` −1.662); reproduce with
+`--origin-planning model_specific` (planner only). Frozen EXP-010 isolate:
+`evaluation/artifacts/EXP-010-robust-model-selection/`
+(`comparison-20260830T014245Z`). WARN on every catalog case produces
+`human_intervention_count` 12 (checkpoints opened, not human decisions).
+That is a secondary, not a substitute for WIS.
 
 ## Planned
 

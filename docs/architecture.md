@@ -99,7 +99,7 @@ This is the non-negotiable split.
 | | LLM / agents | Deterministic Python |
 |---|---|---|
 | Status | Vendor LLM **not integrated**. Graph agents are **Implemented** as deterministic Python over structured state (no live prompts). | **Implemented** for fit/predict/metrics/backtests |
-| May | Select candidate strategies, request tools, interpret diagnostics, propose transforms, explain selection, identify risks, recommend retry or human review | Train/fit, predict yhat, intervals, backtests, MAE/RMSE/WMAPE/sMAPE/MASE/WIS/coverage, statistical checks |
+| May | Interpret deterministic diagnostics; propose candidate model families; explain selection; reason about evidence; participate in the workflow; recommend retry or human review | Backtest; calculate WIS and secondaries; calculate stability statistics; apply the instability veto; rank surviving models; produce numerical forecasts and intervals; verify numerical outputs |
 | Must not | Emit official yhat, intervals, or metrics; claim a model ran without a tool result; invent dataset facts; silently edit series | Call LLMs, import the agent graph, or decide “best model” without a backtest artifact |
 
 ```mermaid
@@ -122,8 +122,12 @@ flowchart TB
   X -->|cite E| D
 ```
 
-The LLM may **repeat** a number only by citing the evidence ID returned by a
-tool. It may not recompute, “improve,” or fill missing metrics from memory.
+The LLM / agent must **not** be described as generating the numerical
+forecast. It may **repeat** a number only by citing the evidence ID returned
+by a tool. It may not recompute, “improve,” or fill missing metrics from
+memory. Official advanced ranking is official backtest WIS among models that
+pass the deterministic EXP-010 veto. Holdout values are never used for
+selection.
 
 ---
 
@@ -216,6 +220,9 @@ better official backtest WIS (EXP-007). Exhaustion or a worse remaining model
 sets `waiting_for_approval` (never auto-approved). WARN and other checkpoint
 triggers also wait. BACKTEST executes the caller allow-list, not the strategy
 shortlist (EXP-008). `POST /runs/{id}/checkpoint` records the human decision.
+Automated catalog evaluation opens checkpoints but does not call that
+endpoint. Interactive Accept / Reject / Review is documented in
+[human-in-the-loop-demo.md](human-in-the-loop-demo.md).
 `POST /runs` queues this graph;
 the handler returns 202. None of these agents emit a new yhat. Production
 numbers come from `run_baseline_forecast` after backtest selection.
@@ -264,8 +271,10 @@ quiet-accept. Retry or human escalation is in RETRY_OR_ACCEPT.
 Append-only JSONL under `trajectories/` via `backend/app/evidence/`. Tool
 payloads are stored as artifacts and referenced (`tool_output_ref`); the JSONL
 line keeps a hash of a redacted `input_summary` (no raw series, no secrets).
-Retries add rows; they do not rewrite history. Child agents are called with
-`persist_trajectory=False`; the orchestrator owns the run file.
+Retries add rows; they do not rewrite history. Official catalog evaluation
+persists one JSONL per case under `evaluation/results/trajectories/`; child
+agents append to that same file. See
+[trajectory-evidence.md](trajectory-evidence.md).
 
 ### Evaluation framework — **Implemented**
 
@@ -402,8 +411,9 @@ Missing evidence ⇒ cannot claim “model executed” or a metric value.
 
 **Baseline and agent harnesses Implemented.** Official improvement is the WIS
 `relative_improvement` in `evaluation/results/comparison.json` for a paired run.
-Cited official pair: `comparison-20260829T125254Z`, value **0.0**. This
-document does not invent a different percentage.
+Cited official pair: `comparison-20260830T030644Z`, value
+**0.13264925035654543** (~13.26%). This document does not invent a
+different percentage.
 
 ```mermaid
 flowchart TB
@@ -421,7 +431,8 @@ flowchart TB
 
 Comparison is valid only when `case_list`, metric code, and splits match.
 Official improvement is executable WIS on that full list. The cited pair is
-parity (`relative_improvement` 0.0), not a win.
+a measured win (`relative_improvement` 0.1326). The advanced path does not
+win every case (8 / 2 / 2).
 
 ---
 
@@ -488,4 +499,50 @@ demonstrated.
 - **Context:** Case 003 swapped to worse `naive` on VERIFY FAIL; 009/010 backtested only a hypothesis shortlist.
 - **Choice:** Retry only if official backtest WIS strictly improves; execute `BASELINE_MODEL_IDS` (or the caller allow-list) at BACKTEST.
 - **Rejected:** Retry-to-next-id regardless of WIS; treating `propose_candidate_ids` as the executed set.
-- **Consequence:** Official pair WIS parity (`comparison-20260829T125254Z`). Not a WIS win. Human WARN checkpoints remain.
+- **Consequence (historical EXP-008 / pre-EXP-010):** That pair had WIS
+  parity (`comparison-20260829T125254Z`). It is archived at
+  `evaluation/artifacts/pre-exp010-promotion/` and is **not** the current
+  official result. Current official is **EXP-010** (D8): official WIS
+  `relative_improvement` **0.13264925035654543**. Human WARN checkpoints
+  remain on the official pair (12 opened, 0 human decisions).
+
+### D7 — Agent-only model-specific backtest origins (EXP-009)
+
+- **Context:** Shared expanding origins of length ~8 made seasonal ETS/ARIMA
+  fail fold 0, so they could never receive official backtest WIS.
+- **Choice:** Advanced `evaluate_candidates` *may* use
+  `run_model_specific_origin_backtest` when callers pass
+  `origin_planning='model_specific'`. Baseline keeps
+  `run_rolling_origin_backtest`. Models declare `minimum_train_size`.
+  After the isolated run failed WIS, the planner was **not** left as the
+  default. It remains a historical opt-in.
+- **Rejected:** Ranking on `wis_completed_only`; changing WIS; copying the
+  planner into the baseline; using holdout for selection; treating EXP-009
+  as a catalog success.
+- **Consequence:** Isolated pair
+  `evaluation/artifacts/EXP-009-ets-arima-min-train/` (`comparison-20260829T154706Z`):
+  agent official WIS **worse** (`relative_improvement` −1.662), mainly case
+  **012**. Do not describe EXP-009 as successful. Reproduce with
+  `python evaluation/run_agent.py --origin-planning model_specific`
+  (CLI treats a bare `model_specific` flag as historical EXP-009:
+  planner only, no veto). Explicit form:
+  `--origin-planning model_specific --selection-policy default`.
+
+### D8 — EXP-010 last/earlier fold-WIS veto (official advanced path)
+
+- **Context:** EXP-009 made ETS/ARIMA eligible but 012 last-fold WIS exploded
+  (ratio ≈17) while official mean still picked ETS.
+- **Choice:** Official advanced `selection_policy='exp010'` adds
+  `analyze_backtest_robustness` and vetoes models with last/earlier ≥ 5
+  (frozen from EXP-009 train folds before the EXP-010 run). Rank remaining
+  by official WIS. Retry skips vetoed models. Baseline stays shared-origin
+  `run_rolling_origin_backtest`. `R` is not retuned.
+- **Rejected:** Weighted blend; last-fold-only ranking (would pick ETS on
+  007); “if break then seasonal naive”; retuning `R` after the catalog run;
+  copying the gate into the baseline; starting EXP-011 in the same change.
+- **Consequence:** Isolated pair
+  `evaluation/artifacts/EXP-010-robust-model-selection/`
+  (`comparison-20260830T014245Z`) matched the promoted official pair
+  `evaluation/results/comparison.json` (`comparison-20260830T030644Z`):
+  official WIS **0.79391** vs baseline **0.91533**,
+  `relative_improvement` **0.1326**. Case 012 still loses holdout WIS.

@@ -51,7 +51,7 @@ FORECAST_ANALYST_MAX_RETRIES = 1
 ORCHESTRATOR_AGENT_ID = "orchestrator"
 ORCHESTRATOR_MAX_RETRIES = 2
 HUMAN_AGENT_ID = "human"
-SelectionRule = Literal["official_backtest_wis", "none"]
+SelectionRule = Literal["official_backtest_wis", "last_fold_wis_fallback", "none"]
 
 
 def _to_utc_iso(value: datetime) -> str:
@@ -161,6 +161,12 @@ class TrajectoryStep(BaseModel):
     evidence_ids: list[str]
     retry_number: int = Field(ge=0)
     final_status: AgentStatus
+    case_id: str | None = None
+    event_type: str | None = None
+    actor: str | None = None
+    payload: JsonObject | None = None
+    safe_tool_arguments: JsonObject | None = None
+    artifact_ref: str | None = None
 
     @field_serializer("timestamp")
     def serialize_timestamp(self, value: datetime) -> str:

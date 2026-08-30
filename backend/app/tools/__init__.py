@@ -28,6 +28,12 @@ from app.tools.forecasting_tools import (
     run_evaluate_candidates_tool,
     run_named_forecast_tool,
 )
+from app.tools.robustness_tools import (
+    ANALYZE_BACKTEST_ROBUSTNESS,
+    ROBUSTNESS_TOOL_NAMES,
+    reject_unknown_robustness_tool,
+    run_analyze_backtest_robustness_tool,
+)
 from app.tools.verification_tools import (
     VERIFICATION_TOOL_NAMES,
     VERIFY_FORECAST,
@@ -40,8 +46,10 @@ from app.tools.verification_tools import (
 __all__ = [
     "CONTEXT_TOOL_NAMES",
     "DATA_TOOL_NAMES",
+    "ANALYZE_BACKTEST_ROBUSTNESS",
     "EVALUATE_CANDIDATES",
     "FORECAST_TOOL_NAMES",
+    "ROBUSTNESS_TOOL_NAMES",
     "INSPECT_CONTEXT",
     "TOOL_NAME",
     "VERIFICATION_TOOL_NAMES",
@@ -53,9 +61,11 @@ __all__ = [
     "reject_unknown_context_tool",
     "reject_unknown_data_tool",
     "reject_unknown_forecast_tool",
+    "reject_unknown_robustness_tool",
     "reject_unknown_tool",
     "reject_unknown_verification_tool",
     "run_backtest_tool",
+    "run_analyze_backtest_robustness_tool",
     "run_evaluate_candidates_tool",
     "run_inspect_context_tool",
     "run_named_context_tool",

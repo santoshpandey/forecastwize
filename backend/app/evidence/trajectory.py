@@ -8,6 +8,8 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, field_serializer, model_validator
 
 JsonObject = dict[str, Any]
+TRAJECTORY_SCHEMA_VERSION = "1"
+
 TrajectoryStatus = Literal[
     "idle",
     "running",
@@ -16,6 +18,60 @@ TrajectoryStatus = Literal[
     "failed",
     "waiting_for_approval",
 ]
+TrajectoryEventType = Literal[
+    "RUN_STARTED",
+    "RUN_COMPLETED",
+    "RUN_FAILED",
+    "AGENT_STARTED",
+    "AGENT_DECISION",
+    "AGENT_COMPLETED",
+    "TOOL_STARTED",
+    "TOOL_COMPLETED",
+    "TOOL_FAILED",
+    "BACKTEST_COMPLETED",
+    "ROBUSTNESS_ANALYZED",
+    "MODEL_VETOED",
+    "MODEL_ELIGIBLE",
+    "MODEL_SELECTED",
+    "FORECAST_STARTED",
+    "FORECAST_COMPLETED",
+    "VERIFICATION_STARTED",
+    "VERIFICATION_COMPLETED",
+    "RETRY_REQUESTED",
+    "RETRY_STARTED",
+    "RETRY_COMPLETED",
+    "RETRY_NOT_REQUIRED",
+    "HUMAN_CHECKPOINT_CREATED",
+    "HUMAN_DECISION",
+]
+VALID_EVENT_TYPES: frozenset[str] = frozenset(
+    (
+        "RUN_STARTED",
+        "RUN_COMPLETED",
+        "RUN_FAILED",
+        "AGENT_STARTED",
+        "AGENT_DECISION",
+        "AGENT_COMPLETED",
+        "TOOL_STARTED",
+        "TOOL_COMPLETED",
+        "TOOL_FAILED",
+        "BACKTEST_COMPLETED",
+        "ROBUSTNESS_ANALYZED",
+        "MODEL_VETOED",
+        "MODEL_ELIGIBLE",
+        "MODEL_SELECTED",
+        "FORECAST_STARTED",
+        "FORECAST_COMPLETED",
+        "VERIFICATION_STARTED",
+        "VERIFICATION_COMPLETED",
+        "RETRY_REQUESTED",
+        "RETRY_STARTED",
+        "RETRY_COMPLETED",
+        "RETRY_NOT_REQUIRED",
+        "HUMAN_CHECKPOINT_CREATED",
+        "HUMAN_DECISION",
+    )
+)
 
 AGENT_INSTRUCTIONS: dict[str, str] = {
     "data_detective": (
@@ -131,6 +187,13 @@ class TrajectoryRecord(BaseModel):
     tool_requested: str | None = None
     tool_result: JsonObject | None = None
     final_status: TrajectoryStatus
+    event_id: str | None = None
+    case_id: str | None = None
+    sequence: int | None = None
+    event_type: TrajectoryEventType | None = None
+    actor: str | None = None
+    payload: JsonObject | None = None
+    artifact_ref: str | None = None
 
     @field_serializer("timestamp")
     def serialize_timestamp(self, value: datetime) -> str:

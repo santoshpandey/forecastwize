@@ -1,12 +1,12 @@
 # ForecastWize agent evaluation
 
-- evaluation_run_id: `agent-20260829T125231Z`
-- timestamp: `2026-08-29T12:52:31.191677Z`
-- git_commit: `54c0a145b55808e8f68474f0485c80cb430dbcd3`
+- evaluation_run_id: `agent-20260830T030413Z`
+- timestamp: `2026-08-30T03:04:13.935369Z`
+- git_commit: `524837b0ea8a9378f7d9d6601d080eceff602431`
 - system: `agent`
 - catalog: `forecastwize-eval-v1` v1
 - case_list: 001, 002, 003, 004, 005, 006, 007, 008, 009, 010, 011, 012
-- wall_seconds: 19.58624630002305
+- wall_seconds: 45.536693200003356
 
 ## Aggregate
 
@@ -14,13 +14,13 @@ Official means include **every** registered case. Failed cases are not dropped.
 `*_completed_only` is labeled and is **not** the headline result.
 
 - cases completed/failed: 12/0 of 12
-- official WIS (headline): 0.915333
-- WIS completed-only (not headline): 0.915333
-- official sMAPE: 9.02472
-- official WMAPE: 15.199
-- official MASE: 1.05935
-- official coverage: 0.89881
-- official interval width: 21.2854
+- official WIS (headline): 0.793914
+- WIS completed-only (not headline): 0.793914
+- official sMAPE: 18.8045
+- official WMAPE: 16.8482
+- official MASE: 0.76821
+- official coverage: 0.928968
+- official interval width: 18.0111
 - human_intervention_count: 12
 - cost: —
 
@@ -28,18 +28,18 @@ Official means include **every** registered case. Failed cases are not dropped.
 
 | case_id | status | model | WIS | sMAPE | seconds | error |
 |---|---|---|---|---|---|---|
-| 001 | completed | naive | 0.454943 | 2.52664 | 1.615 |  |
-| 002 | completed | seasonal_naive | 0.132345 | 0.717543 | 1.511 |  |
-| 003 | completed | seasonal_naive | 0.435545 | 3.03192 | 1.988 |  |
-| 004 | completed | naive | 4.04626 | 13.2471 | 1.524 |  |
-| 005 | completed | seasonal_naive | 0.378888 | 2.5176 | 1.311 |  |
-| 006 | completed | naive | 1.37306 | 1.05659 | 1.119 |  |
-| 007 | completed | naive | 0.308848 | 0.768159 | 1.220 |  |
-| 008 | completed | seasonal_naive | 0.338903 | 1.32738 | 1.637 |  |
-| 009 | completed | seasonal_naive | 0.418546 | 57.1429 | 1.273 |  |
-| 010 | completed | seasonal_naive | 0.892381 | 12.9424 | 0.091 |  |
-| 011 | completed | seasonal_naive | 0.826216 | 8.01085 | 3.197 |  |
-| 012 | completed | seasonal_naive | 1.37805 | 5.00757 | 2.521 |  |
+| 001 | completed | arima | 0.0481364 | 0.269934 | 4.366 |  |
+| 002 | completed | arima | 0.0905349 | 0.513434 | 3.277 |  |
+| 003 | completed | arima | 0.125092 | 0.915362 | 4.748 |  |
+| 004 | completed | arima | 2.45547 | 10.2402 | 5.401 |  |
+| 005 | completed | arima | 0.163602 | 1.02998 | 4.590 |  |
+| 006 | completed | naive | 1.37306 | 1.05659 | 2.312 |  |
+| 007 | completed | seasonal_naive | 0.376196 | 1.11956 | 3.806 |  |
+| 008 | completed | arima | 0.274475 | 1.00644 | 3.916 |  |
+| 009 | completed | arima | 0.377942 | 184.472 | 2.871 |  |
+| 010 | completed | seasonal_naive | 0.892381 | 12.9424 | 1.117 |  |
+| 011 | completed | arima | 0.23575 | 2.13809 | 4.667 |  |
+| 012 | completed | naive | 3.11433 | 9.95089 | 4.259 |  |
 
 ## Errors
 
