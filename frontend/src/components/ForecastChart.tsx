@@ -1,6 +1,8 @@
 "use client";
 
-import { formatNumber } from "@/lib/format";
+import { useMemo, useState, type MouseEvent } from "react";
+
+import { formatDisplayDate, formatForecastNumber } from "@/lib/format";
 import type { ForecastResult, SeriesPoint } from "@/lib/types";
 
 function xOf(index: number, n: number, width: number, pad: number): number {
@@ -15,6 +17,15 @@ function yOf(value: number, min: number, max: number, height: number, pad: numbe
   return height - pad - ((value - min) / span) * (height - pad * 2);
 }
 
+type HoverPoint = {
+  index: number;
+  kind: "history" | "forecast";
+  timestamp: string;
+  value: number | null;
+  lower: number | null;
+  upper: number | null;
+};
+
 export function ForecastChart({
   history,
   forecast,
@@ -22,26 +33,54 @@ export function ForecastChart({
   history: SeriesPoint[];
   forecast: ForecastResult | null;
 }) {
-  const histVals = history.map((point) => point.value).filter((value): value is number => value !== null);
-  const forecastVals = forecast
-    ? [...forecast.yhat, ...forecast.lower, ...forecast.upper]
-    : [];
+  const [hover, setHover] = useState<HoverPoint | null>(null);
+  const histVals = history
+    .map((point) => point.value)
+    .filter((value): value is number => value !== null);
+  const forecastVals = forecast ? [...forecast.yhat, ...forecast.lower, ...forecast.upper] : [];
   const all = [...histVals, ...forecastVals];
+  const width = 720;
+  const height = 300;
+  const pad = 36;
+  const offset = history.length;
+  const total = history.length + (forecast?.yhat.length ?? 0);
+
+  const points: HoverPoint[] = useMemo(() => {
+    const rows: HoverPoint[] = history.map((point, index) => ({
+      index,
+      kind: "history" as const,
+      timestamp: point.timestamp,
+      value: point.value,
+      lower: null,
+      upper: null,
+    }));
+    if (forecast) {
+      forecast.timestamps.forEach((stamp, i) => {
+        rows.push({
+          index: offset + i,
+          kind: "forecast",
+          timestamp: stamp,
+          value: forecast.yhat[i] ?? null,
+          lower: forecast.lower[i] ?? null,
+          upper: forecast.upper[i] ?? null,
+        });
+      });
+    }
+    return rows;
+  }, [forecast, history, offset]);
+
   if (all.length === 0) {
     return <p className="muted">No series values were returned by the API.</p>;
   }
   const min = Math.min(...all);
   const max = Math.max(...all);
-  const width = 720;
-  const height = 280;
-  const pad = 28;
   const histPath = history
     .map((point, index) => {
       if (point.value === null) {
         return null;
       }
       const command = index === 0 ? "M" : "L";
-      return `${command} ${xOf(index, history.length + (forecast?.yhat.length ?? 0), width, pad)} ${yOf(point.value, min, max, height, pad)}`;
+      return `${command} ${xOf(index, total, width, pad)} ${yOf(point.value, min, max, height, pad)}`;
     })
     .filter((part): part is string => part !== null)
     .join(" ");
@@ -52,8 +91,6 @@ export function ForecastChart({
     .at(-1);
   const lastHistoryValue =
     lastHistoryIndex !== undefined ? history[lastHistoryIndex]?.value : null;
-  const offset = history.length;
-  const total = history.length + (forecast?.yhat.length ?? 0);
   let band = "";
   let forecastLine = "";
   if (forecast) {
@@ -85,14 +122,46 @@ export function ForecastChart({
         .join(" ");
   }
 
+  const splitX = forecast ? xOf(Math.max(offset - 1, 0), total, width, pad) : null;
+  const firstHist = history[0]?.timestamp ?? null;
+  const lastFc = forecast?.timestamps.at(-1) ?? null;
+  const startFc = forecast?.timestamps[0] ?? null;
+
+  function onMove(event: MouseEvent<SVGSVGElement>): void {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const viewX = ((event.clientX - rect.left) / rect.width) * width;
+    let best: HoverPoint | null = null;
+    let bestDist = Infinity;
+    for (const point of points) {
+      const x = xOf(point.index, total, width, pad);
+      const dist = Math.abs(x - viewX);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = point;
+      }
+    }
+    setHover(best);
+  }
+
   return (
-    <figure>
+    <figure className="chart-figure">
       <svg
         className="chart"
         viewBox={`0 0 ${width} ${height}`}
         role="img"
         aria-label="Historical series with backend point forecast and prediction interval"
+        onMouseMove={onMove}
+        onMouseLeave={() => setHover(null)}
       >
+        {splitX !== null ? (
+          <rect
+            x={splitX}
+            y={pad - 8}
+            width={width - pad - splitX}
+            height={height - pad * 2 + 8}
+            fill="#eef3f8"
+          />
+        ) : null}
         {band ? <path d={band} fill="#c5d4e4" stroke="none" /> : null}
         {histPath ? <path d={histPath} fill="none" stroke="#1b1b1b" strokeWidth="1.8" /> : null}
         {forecastLine ? (
@@ -104,22 +173,73 @@ export function ForecastChart({
             strokeDasharray="5 4"
           />
         ) : null}
+        {splitX !== null ? (
+          <>
+            <line
+              x1={splitX}
+              x2={splitX}
+              y1={pad - 8}
+              y2={height - pad}
+              stroke="#1f4e79"
+              strokeWidth="1"
+              strokeDasharray="3 3"
+            />
+            <text x={splitX + 6} y={pad - 12} fontSize="11" fill="#1f4e79">
+              Forecast starts
+            </text>
+          </>
+        ) : null}
+        {hover ? (
+          <circle
+            cx={xOf(hover.index, total, width, pad)}
+            cy={
+              hover.value === null
+                ? height / 2
+                : yOf(hover.value, min, max, height, pad)
+            }
+            r="3.5"
+            fill="#1f4e79"
+          />
+        ) : null}
         <text x={4} y={pad} fontSize="11" fill="#5e5e5e">
-          {formatNumber(max)}
+          {formatForecastNumber(max)}
         </text>
         <text x={4} y={height - pad + 4} fontSize="11" fill="#5e5e5e">
-          {formatNumber(min)}
+          {formatForecastNumber(min)}
         </text>
-        <text x={pad} y={height - 6} fontSize="11" fill="#5e5e5e">
-          History → forecast (backend series)
+        <text x={pad} y={height - 8} fontSize="11" fill="#5e5e5e">
+          {formatDisplayDate(firstHist)}
+        </text>
+        {startFc ? (
+          <text x={splitX ?? pad} y={height - 8} fontSize="11" fill="#5e5e5e" textAnchor="middle">
+            {formatDisplayDate(startFc)}
+          </text>
+        ) : null}
+        <text x={width - pad} y={height - 8} fontSize="11" fill="#5e5e5e" textAnchor="end">
+          {formatDisplayDate(lastFc ?? history.at(-1)?.timestamp ?? null)}
         </text>
       </svg>
+      {hover ? (
+        <div className="chart-tooltip" role="status">
+          <strong>{formatDisplayDate(hover.timestamp)}</strong>
+          {hover.kind === "history" ? (
+            <span>Historical: {formatForecastNumber(hover.value)}</span>
+          ) : (
+            <>
+              <span>Forecast: {formatForecastNumber(hover.value)}</span>
+              <span>
+                Interval: {formatForecastNumber(hover.lower)} – {formatForecastNumber(hover.upper)}
+              </span>
+            </>
+          )}
+        </div>
+      ) : null}
       <figcaption className="legend">
         <span>
-          <i className="swatch" aria-hidden="true" /> Historical (solid)
+          <i className="swatch" aria-hidden="true" /> Historical
         </span>
         <span>
-          <i className="swatch swatch-forecast" aria-hidden="true" /> Point forecast (dashed)
+          <i className="swatch swatch-forecast" aria-hidden="true" /> Forecast
         </span>
         <span>
           <i className="swatch swatch-band" aria-hidden="true" /> Prediction interval

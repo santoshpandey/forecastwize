@@ -4,14 +4,8 @@ import { useState } from "react";
 
 import { Banner } from "@/components/Banner";
 import { ApiError, decideRunCheckpoint } from "@/lib/api";
+import { CHECKPOINT_TRIGGER_LABELS } from "@/lib/runDisplay";
 import type { RunResponse } from "@/lib/types";
-
-const TRIGGER_LABELS: Record<string, string> = {
-  data_modification_proposed: "Data modification proposed",
-  low_forecast_confidence: "Forecast confidence is low",
-  verification_failed_repeatedly: "Verification failed repeatedly",
-  material_uncertainty: "Material uncertainty remains",
-};
 
 export function HumanCheckpointPanel({
   run,
@@ -77,7 +71,7 @@ export function HumanCheckpointPanel({
       {triggers.length > 0 ? (
         <ul>
           {triggers.map((item) => (
-            <li key={item}>{TRIGGER_LABELS[item] ?? item}</li>
+            <li key={item}>{CHECKPOINT_TRIGGER_LABELS[item] ?? item}</li>
           ))}
         </ul>
       ) : null}
