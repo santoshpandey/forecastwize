@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 
 import { AppShell } from "@/components/AppShell";
 import { Banner } from "@/components/Banner";
-import { JourneyNav } from "@/components/JourneyNav";
+import { WorkspaceJourneyNav } from "@/components/WorkspaceJourneyNav";
 import { ApiError, getDataset } from "@/lib/api";
 import { formatNumber, formatTimestamp } from "@/lib/format";
 import { asId } from "@/lib/route";
@@ -89,7 +90,7 @@ export default function DatasetPage() {
 
   return (
     <AppShell current="workspace">
-      <JourneyNav dataset={dataset} run={null} current="diagnostics" />
+      <WorkspaceJourneyNav current="diagnostics" datasetId={dataset?.id ?? null} />
       <h1 className="page-title">Dataset diagnostics</h1>
       <p className="lede">
         Counts, range, frequency, gaps, and screens below are returned by the API. This page does
@@ -165,9 +166,9 @@ export default function DatasetPage() {
             />
           </div>
           <div className="actions">
-            <a className="button" href={`/datasets/${dataset.id}/configure`}>
+            <Link className="button" href={`/datasets/${dataset.id}/configure`}>
               Configure forecast
-            </a>
+            </Link>
           </div>
         </>
       ) : null}

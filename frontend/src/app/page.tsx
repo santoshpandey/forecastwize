@@ -1,11 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/Banner";
 import { HealthStatus } from "@/components/HealthStatus";
-import { JourneyNav } from "@/components/JourneyNav";
+import { WorkflowStrip } from "@/components/WorkflowStrip";
+import { WorkspaceJourneyNav } from "@/components/WorkspaceJourneyNav";
 import { getStoredDatasetId, getStoredRunId } from "@/lib/session";
 
 export default function DashboardPage() {
@@ -23,35 +25,36 @@ export default function DashboardPage() {
 
   return (
     <AppShell current="dashboard">
-      <JourneyNav dataset={null} run={null} current="dashboard" />
+      <WorkspaceJourneyNav current="dashboard" datasetId={datasetId} runId={runId} />
       <h1 className="page-title">Dashboard</h1>
       <p className="lede">
         ForecastWize is a decision-support workspace. Numerical forecasts and scores come from
         the backend. This UI displays those results; it does not calculate WIS or other official
         metrics in the browser.
       </p>
+      <WorkflowStrip />
       <HealthStatus />
       <div className="grid grid-2">
         <div className="card">
           <h2>Start an analysis</h2>
           <p className="muted">Upload a CSV with timestamp and value columns, then review diagnostics.</p>
           <div className="actions">
-            <a className="button" href="/upload">
+            <Link className="button" href="/upload">
               Upload dataset
-            </a>
+            </Link>
           </div>
         </div>
         <div className="card">
           <h2>Resume</h2>
           {datasetId ? (
             <div className="actions">
-              <a className="button secondary" href={`/datasets/${datasetId}`}>
+              <Link className="button secondary" href={`/datasets/${datasetId}`}>
                 Open last dataset
-              </a>
+              </Link>
               {runId ? (
-                <a className="button secondary" href={`/runs/${runId}`}>
+                <Link className="button secondary" href={`/runs/${runId}`}>
                   Open last agent run
-                </a>
+                </Link>
               ) : null}
             </div>
           ) : (
@@ -68,9 +71,9 @@ export default function DashboardPage() {
             Official BASELINE vs ADVANCED comparison from evaluation JSON.
           </p>
           <div className="actions">
-            <a className="button secondary" href="/evaluation">
+            <Link className="button secondary" href="/evaluation">
               Open evaluation dashboard
-            </a>
+            </Link>
           </div>
         </div>
       </div>

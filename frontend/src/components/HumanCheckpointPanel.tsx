@@ -56,7 +56,9 @@ export function HumanCheckpointPanel({
       {waiting ? (
         <Banner kind="warning">
           <strong>Decision required.</strong> {checkpoint.reason} This control does not
-          auto-approve. Source data is not modified.
+          auto-approve. Source data is not modified. Sequence when you Accept: checkpoint created
+          → human Accept → HUMAN_DECISION → RUN_COMPLETED. The automated catalog never records that
+          decision.
         </Banner>
       ) : null}
       {checkpoint.status === "approved" ? (
@@ -128,7 +130,7 @@ export function HumanCheckpointPanel({
           <p className="muted">
             Accept records approval of the recommendation. Reject preserves the rejection on the
             run trajectory. Review keeps the gate open. None of these actions modify the original
-            dataset.
+            dataset. Official 12-case evaluation does not call this control.
           </p>
         </>
       ) : null}

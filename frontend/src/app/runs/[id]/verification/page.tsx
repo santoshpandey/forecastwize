@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 
 import { AppShell } from "@/components/AppShell";
 import { Banner } from "@/components/Banner";
 import { HumanCheckpointPanel } from "@/components/HumanCheckpointPanel";
-import { JourneyNav } from "@/components/JourneyNav";
+import { WorkspaceJourneyNav } from "@/components/WorkspaceJourneyNav";
 import { ApiError, getDataset, getRun } from "@/lib/api";
 import { asId } from "@/lib/route";
 import { setStoredDatasetId, setStoredRunId } from "@/lib/session";
@@ -59,11 +60,16 @@ export default function VerificationPage() {
 
   return (
     <AppShell current="workspace">
-      <JourneyNav dataset={dataset} run={run} current="verification" />
+      <WorkspaceJourneyNav
+        current="verification"
+        datasetId={dataset?.id ?? run?.dataset_id ?? null}
+        runId={run?.id ?? null}
+      />
       <h1 className="page-title">Verification</h1>
       <p className="lede">
         Checks are deterministic backend results (PASS / WARN / FAIL). This page does not re-score
-        residuals or coverage.
+        residuals or coverage. If a checkpoint is open, use Accept / Reject / Review here or on
+        Agent run. The automated catalog does not record a human decision.
       </p>
       {!run && !error ? <Banner kind="loading">Loading verification…</Banner> : null}
       {error ? <Banner kind="error">{error}</Banner> : null}
@@ -93,6 +99,16 @@ export default function VerificationPage() {
             </div>
           ))
         : null}
+      {run ? (
+        <div className="actions">
+          <Link className="button secondary" href={`/runs/${run.id}`}>
+            Back to agent run
+          </Link>
+          <Link className="button secondary" href={`/runs/${run.id}/result`}>
+            Open forecast
+          </Link>
+        </div>
+      ) : null}
     </AppShell>
   );
 }

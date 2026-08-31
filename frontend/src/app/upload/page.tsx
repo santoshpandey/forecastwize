@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { AppShell } from "@/components/AppShell";
 import { Banner } from "@/components/Banner";
-import { JourneyNav } from "@/components/JourneyNav";
+import { WorkspaceJourneyNav } from "@/components/WorkspaceJourneyNav";
 import { ApiError, uploadDataset } from "@/lib/api";
 import { setStoredDatasetId } from "@/lib/session";
 
@@ -43,7 +43,7 @@ export default function UploadPage() {
 
   return (
     <AppShell current="upload">
-      <JourneyNav dataset={null} run={null} current="upload" />
+      <WorkspaceJourneyNav current="upload" />
       <h1 className="page-title">Upload dataset</h1>
       <p className="lede">
         Files are validated by the API (type, size, CSV structure, path safety). The original file

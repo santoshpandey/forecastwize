@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 
 import { HealthStatus } from "@/components/HealthStatus";
 
@@ -16,19 +17,19 @@ export function AppShell({
       </a>
       <header className="app-header">
         <div className="app-header-inner">
-          <a className="brand" href="/">
+          <Link className="brand" href="/">
             ForecastWize
-          </a>
+          </Link>
           <nav className="nav" aria-label="Primary">
-            <a href="/" aria-current={current === "dashboard" ? "page" : undefined}>
+            <Link href="/" aria-current={current === "dashboard" ? "page" : undefined}>
               Dashboard
-            </a>
-            <a href="/upload" aria-current={current === "upload" ? "page" : undefined}>
+            </Link>
+            <Link href="/upload" aria-current={current === "upload" ? "page" : undefined}>
               Upload dataset
-            </a>
-            <a href="/evaluation" aria-current={current === "evaluation" ? "page" : undefined}>
+            </Link>
+            <Link href="/evaluation" aria-current={current === "evaluation" ? "page" : undefined}>
               Evaluation
-            </a>
+            </Link>
           </nav>
           <HealthStatus compact />
         </div>

@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 import { AppShell } from "@/components/AppShell";
 import { Banner } from "@/components/Banner";
-import { JourneyNav } from "@/components/JourneyNav";
+import { WorkspaceJourneyNav } from "@/components/WorkspaceJourneyNav";
 import { ApiError, getEvaluationChangelog } from "@/lib/api";
 
 export default function EvaluationChangelogPage() {
@@ -34,16 +35,16 @@ export default function EvaluationChangelogPage() {
 
   return (
     <AppShell current="evaluation">
-      <JourneyNav dataset={null} run={null} current="evaluation" />
+      <WorkspaceJourneyNav current="evaluation" />
       <h1 className="page-title">Experiment changelog</h1>
       <p className="lede">
         Repository file {path ?? "docs/changelog.md"}, served by the API. Scores still live in
         evaluation JSON, not in this narrative.
       </p>
       <div className="actions">
-        <a className="button" href="/evaluation">
+        <Link className="button" href="/evaluation">
           Back to evaluation dashboard
-        </a>
+        </Link>
       </div>
       {!markdown && !error ? <Banner kind="loading">Loading changelog…</Banner> : null}
       {error ? <Banner kind="error">{error}</Banner> : null}

@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 
 import { AgentPipeline } from "@/components/AgentPipeline";
 import { AppShell } from "@/components/AppShell";
 import { Banner } from "@/components/Banner";
 import { HumanCheckpointPanel } from "@/components/HumanCheckpointPanel";
-import { JourneyNav } from "@/components/JourneyNav";
+import { WorkspaceJourneyNav } from "@/components/WorkspaceJourneyNav";
 import { ApiError, getDataset, getRun } from "@/lib/api";
 import { asId } from "@/lib/route";
 import { setStoredDatasetId, setStoredRunId } from "@/lib/session";
@@ -77,11 +78,16 @@ export default function RunExecutionPage() {
 
   return (
     <AppShell current="workspace">
-      <JourneyNav dataset={dataset} run={run} current="execution" />
+      <WorkspaceJourneyNav
+        current="execution"
+        datasetId={dataset?.id ?? run?.dataset_id ?? null}
+        runId={run?.id ?? null}
+      />
       <h1 className="page-title">Agent execution</h1>
       <p className="lede">
         Steps reflect backend graph nodes. Status is polled from GET /runs; this page does not
-        invent progress.
+        invent progress. Verification may open a human checkpoint; Accept is only recorded when
+        you click it here (not in the automated catalog).
       </p>
       {!run && !error ? <Banner kind="loading">Loading run…</Banner> : null}
       {error ? <Banner kind="error">{error}</Banner> : null}
@@ -105,9 +111,15 @@ export default function RunExecutionPage() {
           </div>
           {run.status === "completed" || run.status === "waiting_for_approval" ? (
             <div className="actions">
-              <a className="button" href={`/runs/${run.id}/result`}>
+              <Link className="button" href={`/runs/${run.id}/result`}>
                 Open forecast result
-              </a>
+              </Link>
+              <Link className="button secondary" href={`/runs/${run.id}/verification`}>
+                Open verification
+              </Link>
+              <Link className="button secondary" href={`/runs/${run.id}/comparison`}>
+                Open model comparison
+              </Link>
             </div>
           ) : null}
         </>

@@ -115,6 +115,11 @@ export type CandidateRow = {
   n_folds_failed: number;
   rank: number | null;
   error_message: string | null;
+  eligible?: boolean | null;
+  vetoed?: boolean | null;
+  veto_reason?: string | null;
+  selectable?: boolean | null;
+  recent_vs_earlier_ratio?: number | null;
 };
 
 export type VerificationCheck = {
@@ -275,11 +280,17 @@ export type ChangelogDocument = {
 };
 
 export const PIPELINE_STEPS = [
-  { id: "detective", label: "Data Detective", nodes: ["PROFILE", "DIAGNOSE"] },
-  { id: "strategist", label: "Forecast Strategist", nodes: ["STRATEGY"] },
-  { id: "context", label: "Context Analyst", nodes: ["CONTEXT"] },
-  { id: "backtest", label: "Backtesting", nodes: ["BACKTEST"] },
+  { id: "data", label: "Data", nodes: ["PROFILE"] },
+  { id: "detective", label: "Data Detective", nodes: ["DIAGNOSE"] },
+  { id: "context", label: "Context Analysis", nodes: ["CONTEXT"] },
+  { id: "strategy", label: "Forecast Strategy", nodes: ["STRATEGY"] },
+  {
+    id: "backtest",
+    label: "Backtest · robustness · model selection",
+    nodes: ["BACKTEST"],
+  },
   { id: "forecast", label: "Forecast", nodes: ["FORECAST"] },
-  { id: "verify", label: "Verification", nodes: ["VERIFY", "RETRY_OR_ACCEPT"] },
-  { id: "analysis", label: "Final Analysis", nodes: ["ANALYZE", "FINALIZE"] },
+  { id: "verify", label: "Verification", nodes: ["VERIFY"] },
+  { id: "checkpoint", label: "Human checkpoint when required", nodes: ["RETRY_OR_ACCEPT"] },
+  { id: "analysis", label: "Final analysis", nodes: ["ANALYZE", "FINALIZE"] },
 ] as const;

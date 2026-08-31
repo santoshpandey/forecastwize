@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 
 import { AppShell } from "@/components/AppShell";
 import { Banner } from "@/components/Banner";
-import { JourneyNav } from "@/components/JourneyNav";
+import { WorkspaceJourneyNav } from "@/components/WorkspaceJourneyNav";
 import { ApiError, createRun, getDataset } from "@/lib/api";
 import { asId } from "@/lib/route";
 import { setStoredDatasetId, setStoredRunId } from "@/lib/session";
@@ -80,12 +81,25 @@ export default function ConfigurePage() {
 
   return (
     <AppShell current="workspace">
-      <JourneyNav dataset={dataset} run={null} current="configure" />
+      <WorkspaceJourneyNav current="configure" datasetId={dataset?.id ?? null} />
       <h1 className="page-title">Forecast configuration</h1>
       <p className="lede">
         Horizon, frequency, and coverage are sent to the API. The agent graph selects a strategy
         from backtest WIS; this form does not pick a winning model.
       </p>
+      <div className="card">
+        <h2>Official selection policy (frozen)</h2>
+        <p>
+          Production default is <strong>EXP-010</strong> (
+          <code>selection_policy=exp010</code>, model-specific origins, last/earlier WIS veto{" "}
+          <code>R=5.0</code>). This form does not change that policy or the official catalog
+          benchmark.
+        </p>
+        <p className="muted">
+          Official evaluation results are displayed on Evaluation. Do not treat this screen as a
+          way to retune R or swap the frozen selection rule.
+        </p>
+      </div>
       {loading ? <Banner kind="loading">Loading dataset…</Banner> : null}
       {error ? <Banner kind="error">{error}</Banner> : null}
       {dataset && !dataset.frequency ? (
@@ -139,9 +153,9 @@ export default function ConfigurePage() {
             <button type="submit" disabled={busy}>
               {busy ? "Starting…" : "Run agent graph"}
             </button>
-            <a className="button secondary" href={`/datasets/${dataset.id}`}>
+            <Link className="button secondary" href={`/datasets/${dataset.id}`}>
               Back to diagnostics
-            </a>
+            </Link>
           </div>
         </form>
       ) : null}

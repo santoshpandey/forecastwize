@@ -1,10 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { AppShell } from "@/components/AppShell";
 import { Banner, EmptyState } from "@/components/Banner";
-import { JourneyNav } from "@/components/JourneyNav";
+import { WorkspaceJourneyNav } from "@/components/WorkspaceJourneyNav";
 import { ApiError, compareEvaluations, getEvaluation, startEvaluation } from "@/lib/api";
 import { formatNumber } from "@/lib/format";
 import {
@@ -90,11 +91,11 @@ export default function EvaluationsPage() {
 
   return (
     <AppShell current="evaluations">
-      <JourneyNav dataset={null} run={null} current="evaluation" />
+      <WorkspaceJourneyNav current="evaluation" />
       <h1 className="page-title">Evaluation comparison</h1>
       <p className="lede">
         Queue a new catalog run. Official BASELINE vs ADVANCED figures live on the{" "}
-        <a href="/evaluation">evaluation dashboard</a>, which reads evaluation JSON. This page does
+        <Link href="/evaluation">evaluation dashboard</Link>, which reads evaluation JSON. This page does
         not recompute improvement.
       </p>
       {error ? <Banner kind="error">{error}</Banner> : null}

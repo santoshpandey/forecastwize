@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 
 import { AppShell } from "@/components/AppShell";
 import { Banner } from "@/components/Banner";
 import { ForecastChart } from "@/components/ForecastChart";
 import { HumanCheckpointPanel } from "@/components/HumanCheckpointPanel";
-import { JourneyNav } from "@/components/JourneyNav";
+import { WorkspaceJourneyNav } from "@/components/WorkspaceJourneyNav";
 import { ApiError, getDataset, getRun } from "@/lib/api";
 import { formatNumber, formatTimestamp } from "@/lib/format";
 import { asId } from "@/lib/route";
@@ -55,7 +56,11 @@ export default function ForecastResultPage() {
 
   return (
     <AppShell current="workspace">
-      <JourneyNav dataset={dataset} run={run} current="result" />
+      <WorkspaceJourneyNav
+        current="result"
+        datasetId={dataset?.id ?? run?.dataset_id ?? null}
+        runId={run?.id ?? null}
+      />
       <h1 className="page-title">Forecast result</h1>
       <p className="lede">
         Historical points and forecast arrays are taken from the API. Interval quality is not
@@ -92,6 +97,8 @@ export default function ForecastResultPage() {
             <dd>{run?.selected_strategy_id ?? forecast.model}</dd>
             <dt>Frequency</dt>
             <dd>{forecast.frequency}</dd>
+            <dt>Verification</dt>
+            <dd>{run?.verification_overall ?? "Not returned"}</dd>
             <dt>Horizon</dt>
             <dd className="metric">{formatNumber(forecast.forecast_horizon)}</dd>
             <dt>Training range</dt>
@@ -140,14 +147,14 @@ export default function ForecastResultPage() {
           <div className="card">
             <h2>Verification result</h2>
             <p>{run.verification_overall ?? "Not returned"}</p>
-            <a href={`/runs/${run.id}/verification`}>Open verification detail</a>
+            <Link href={`/runs/${run.id}/verification`}>Open verification detail</Link>
           </div>
           <div className="card">
             <h2>Model comparison</h2>
             <p className="muted">
               {run.candidates.length} candidate row(s) from official backtest WIS.
             </p>
-            <a href={`/runs/${run.id}/comparison`}>Open model comparison</a>
+            <Link href={`/runs/${run.id}/comparison`}>Open model comparison</Link>
           </div>
         </div>
       ) : null}

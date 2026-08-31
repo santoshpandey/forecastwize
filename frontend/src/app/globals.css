@@ -97,6 +97,18 @@ select:focus-visible {
   font-weight: 600;
 }
 
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .main {
   max-width: 72rem;
   margin: 0 auto;
@@ -205,6 +217,109 @@ select:focus-visible {
   border-color: var(--accent);
   color: var(--accent);
   font-weight: 600;
+}
+
+.journey-unavailable {
+  border-style: dashed;
+  color: #9a9a9a;
+  cursor: not-allowed;
+}
+
+.workflow-strip {
+  margin: 0 0 1.25rem;
+}
+
+.workflow-strip ol {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.45rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.25rem;
+  align-items: center;
+}
+
+.workflow-strip li {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.workflow-strip li:not(:last-child)::after {
+  content: " → ";
+  color: #b0aea6;
+}
+
+.hero-result {
+  margin-bottom: 1.25rem;
+}
+
+.hero-improvement {
+  margin: 0 0 1rem;
+}
+
+.hero-kicker {
+  display: block;
+  font-size: 0.92rem;
+  font-weight: 400;
+  color: var(--muted);
+  margin-top: 0.25rem;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.hero-metric {
+  font-size: 1.35rem;
+  font-weight: 650;
+  margin: 0;
+}
+
+.card-challenge {
+  border-color: var(--error-line);
+}
+
+.row-selected {
+  background: var(--ok-bg);
+}
+
+.wis-figure {
+  margin: 0;
+}
+
+.chart-caption {
+  font-weight: 650;
+  margin: 0 0 0.5rem;
+}
+
+.chart-label,
+.chart-value,
+.chart-axis,
+.chart-tick {
+  fill: #5e5e5e;
+  font-size: 11px;
+}
+
+.chart-tick-warn {
+  fill: #8b1e1e;
+  font-size: 10px;
+}
+
+.swatch-baseline {
+  background: #8a8a8a;
+  height: 0.7rem;
+}
+
+.swatch-advanced {
+  background: #1f4e79;
+  height: 0.7rem;
+}
+
+.swatch-challenge {
+  background: #8b1e1e;
+  height: 0.7rem;
 }
 
 .pipeline {
@@ -437,7 +552,8 @@ button:disabled {
 @media (max-width: 800px) {
   .grid-2,
   .grid-3,
-  .metric-tiles {
+  .metric-tiles,
+  .hero-grid {
     grid-template-columns: 1fr;
   }
 
