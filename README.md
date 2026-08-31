@@ -314,6 +314,7 @@ redacted. Failures are kept.
 - [Experiments](experiments/README.md)
 - [Reproduction](docs/reproduction.md)
 - [Security](docs/security.md)
+- [Demo notes (judges)](demo-notes.md)
 - [Demo script](docs/demo-script.md)
 - [Human-in-the-loop demo](docs/human-in-the-loop-demo.md)
 - [Changelog](docs/changelog.md)

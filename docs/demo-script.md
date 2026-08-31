@@ -1,5 +1,8 @@
 # Demo script
 
+Judge-facing 5–7 minute walkthrough, Q&A, and fallbacks:
+[demo-notes.md](../demo-notes.md).
+
 This script covers **implemented** behavior. Do **not** run a live 12-case
 catalog evaluation during the demo. Official scores and trajectories are
 already validated and checked in.

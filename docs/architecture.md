@@ -8,6 +8,13 @@ This document is the **intended** architecture. Components that exist in the rep
 are labeled **Implemented**. Everything else is **Planned**. Do not treat a
 diagram as a running subsystem.
 
+**Hackathon architecture diagram** (agents vs deterministic engine, validation gate,
+challenge loop):
+
+![ForecastWize — Agentic AI Forecasting Architecture](forecastwize-architecture.png)
+
+Regenerate with `python scripts/render_architecture_diagram.py` (requires Pillow).
+
 Related: [product-requirements.md](product-requirements.md),
 [agent-design.md](agent-design.md),
 [forecasting-methodology.md](forecasting-methodology.md),
